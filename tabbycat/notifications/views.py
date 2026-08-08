@@ -67,7 +67,7 @@ class TestEmailView(WarnAboutLegacySendgridConfigVarsMixin, AdministratorMixin, 
             else:
                 logger.warning("SMTP response exception in test email", exc_info=True)
 
-        except (ConnectionError, SMTPException) as e:
+        except (ConnectionError, SMTPException, AnymailError) as e:
             messages.error(self.request,
                 _("There was an error sending the test email: %(error)s") % {'error': str(e)})
             logger.warning("Other error in test email", exc_info=True)
