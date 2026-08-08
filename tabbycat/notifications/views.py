@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timezone
 from smtplib import SMTPException, SMTPResponseException
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from anymail.exceptions import AnymailError
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
