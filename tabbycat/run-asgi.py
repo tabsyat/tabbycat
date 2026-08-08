@@ -59,7 +59,7 @@ else:
         application=asgi.application,
         endpoints=build_endpoint_description_strings(
             host="0.0.0.0",
-            port=port,
+            port="8000",
         ),
         ping_interval=15,
         ping_timeout=30,
