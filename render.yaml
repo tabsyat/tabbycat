@@ -6,7 +6,7 @@ databases:
 
 services:
   - type: web
-    name: tabbycat_website
+    name: fydt2026
     env: python
     plan: free
     region: oregon
