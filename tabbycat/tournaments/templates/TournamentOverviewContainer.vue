@@ -5,8 +5,7 @@ import { computed, defineAsyncComponent, ref, toRef } from 'vue'
 import UpdatesList from '../../templates/graphs/UpdatesList.vue'
 import { useWebSocket } from '../../templates/composables/useWebSocket.js'
 import { useDjangoI18n } from '../../templates/composables/useDjangoI18n.js'
-
-const BallotsGraph = defineAsyncComponent(() => import('../../templates/graphs/BallotsGraph.vue'))
+import BallotsGraph from '../../templates/graphs/BallotsGraph.vue'
 
 const props = defineProps({
   tournamentSlug: String,
