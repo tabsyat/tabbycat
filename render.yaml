@@ -34,7 +34,7 @@ services:
       - key: WEB_CONCURRENCY
         value: 4
       - key: PORT
-        value: 8000
+        value: 10000
       - key: TAB_DIRECTOR_EMAIL
         sync: false
       - key: TIME_ZONE
