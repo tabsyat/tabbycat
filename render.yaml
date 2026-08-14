@@ -6,7 +6,7 @@ databases:
 
 services:
   - type: web
-    name: tabbycat-website
+    name: glcintras2026
     env: python
     plan: free
     region: oregon
