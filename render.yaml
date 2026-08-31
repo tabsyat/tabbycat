@@ -6,7 +6,7 @@ databases:
 
 services:
   - type: web
-    name: glcintras2026
+    name: kalesh2026
     env: python
     plan: free
     region: oregon
