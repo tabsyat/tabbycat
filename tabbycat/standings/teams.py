@@ -476,6 +476,7 @@ class TeamStandingsGenerator(BaseStandingsGenerator):
         "margin_avg"          : AverageMarginMetricAnnotator,
         "npullups"            : TeamPullupsMetricAnnotator,
         "pullup_debates"      : PullupDebatesMetricAnnotator,
+        "nintermediate"       : TeamIntermediateBracketsMetricAnnotator,
         "num_adjs"            : NumberOfAdjudicatorsMetricAnnotator,
         "firsts"              : NumberOfFirstsMetricAnnotator,
         "seconds"             : NumberOfSecondsMetricAnnotator,
