@@ -211,7 +211,6 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         if pullup_needed_for:
             raise DrawFatalError("Last bracket is still odd!\n" + repr(pullup_needed_for))
 
-    @classmethod
     def _intermediate_brackets(self, brackets):
         """Operates in-place."""
         new = OrderedDict()
