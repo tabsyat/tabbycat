@@ -801,6 +801,9 @@ class TabbycatTableBuilder(BaseTableBuilder):
                         if flag == 'pullup' and standings is not None:
                             prev_pullups = standings.get_standing(dt.team).metrics['npullups']
                             flag_text = _("Pull-up team (%(ordinal)s pull-up)") % {'ordinal': ordinal(prev_pullups + 1)}
+                        elif flag == 'intermediate' and standings is not None:
+                            prev_intermediate = standings.get_standing(dt.team).metrics['nintermediate']
+                            flag_text = _("Intermediate bracket team (%(ordinal)s encounter)") % {'ordinal': ordinal(prev_intermediate + 1)}
                         else:
                             flag_text = _draw_flags_dict.get(flag, flag)
                         conflicts.append(("secondary", "%(team)s: %(flag)s" % {
