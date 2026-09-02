@@ -299,6 +299,27 @@ class PullupDebatesMetricAnnotator(TeamPullupsMetricAnnotator):
         return 'debateteam__debate__flags__contains'
 
 
+class TeamIntermediateBracketsMetricAnnotator(TeamScoreQuerySetMetricAnnotator):
+    """Metric annotator for number of times a team has been in an intermediate bracket.
+
+    How many times the team has been in an intermediate bracket (i.e., has an
+    intermediate flag in an associated DebateTeam object)."""
+
+    key = "nintermediate"
+    name = _("number of times in intermediate bracket")
+    abbr = _("IB")
+
+    function = Count
+    where_value = ['intermediate']
+    exclude_unconfirmed = False
+
+    def get_field(self):
+        return 'debateteam'
+
+    def get_where_field(self):
+        return 'debateteam__flags__contains'
+
+
 class NumberOfAdjudicatorsMetricAnnotator(TeamScoreQuerySetMetricAnnotator):
     """Metric annotator for number of votes given by a panel.
 
@@ -455,6 +476,7 @@ class TeamStandingsGenerator(BaseStandingsGenerator):
         "margin_avg"          : AverageMarginMetricAnnotator,
         "npullups"            : TeamPullupsMetricAnnotator,
         "pullup_debates"      : PullupDebatesMetricAnnotator,
+        "nintermediate"       : TeamIntermediateBracketsMetricAnnotator,
         "num_adjs"            : NumberOfAdjudicatorsMetricAnnotator,
         "firsts"              : NumberOfFirstsMetricAnnotator,
         "seconds"             : NumberOfSecondsMetricAnnotator,
