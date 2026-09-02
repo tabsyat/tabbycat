@@ -212,13 +212,16 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
             raise DrawFatalError("Last bracket is still odd!\n" + repr(pullup_needed_for))
 
     @classmethod
-    def _intermediate_brackets(cls, brackets):
+    def _intermediate_brackets(self, brackets):
         """Operates in-place."""
         new = OrderedDict()
         odd_team = None
         for points, teams in brackets.items():
             if odd_team:
-                new[points+0.5] = [odd_team, teams.pop(0)]
+                partner = teams.pop(0)
+                new[points+0.5] = [odd_team, partner]
+                self.add_team_flag(odd_team, "intermediate")
+                self.add_team_flag(partner, "intermediate")
                 odd_team = None
             if len(teams) % 2 != 0:
                 odd_team = teams.pop()
