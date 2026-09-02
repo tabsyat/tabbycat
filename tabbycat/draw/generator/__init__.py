@@ -26,6 +26,7 @@ DRAW_FLAG_DESCRIPTIONS = (
     ("bub_dn_accom", _("Bubble down (to accommodate)")),
     ("no_bub_updn", _("Can't bubble up/down")),
     ("pullup", _("Pull-up team")),
+    ("intermediate", _("Intermediate bracket team")),
 )
 
 def get_two_team_generator(draw_type, avoid_conflicts='australs', side_allocations=None, **kwargs):
