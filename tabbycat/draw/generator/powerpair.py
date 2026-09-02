@@ -270,6 +270,8 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
                 if not _check_conflict(swap_team, teams[1]):
                     self.add_team_flag(teams[0], (conflict == 1) and "bub_up_inst" or "bub_up_hist")
                     self.add_team_flag(swap_team, "bub_up_accom")
+                    self.remove_team_flag(teams[0], "intermediate")
+                    self.add_team_flag(swap_team, "intermediate")
                     teams[0], brackets[points+0.5][-1] = swap_team, teams[0]
                     continue
 
@@ -279,6 +281,8 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
                 if not _check_conflict(swap_team, teams[0]):
                     self.add_team_flag(teams[1], (conflict == 1) and "bub_dn_inst" or "bub_dn_hist")
                     self.add_team_flag(swap_team, "bub_dn_accom")
+                    self.remove_team_flag(teams[1], "intermediate")
+                    self.add_team_flag(swap_team, "intermediate")
                     teams[1], brackets[points-0.5][0] = swap_team, teams[1]
                     continue
 
