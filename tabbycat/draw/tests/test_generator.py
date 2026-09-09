@@ -121,7 +121,7 @@ class TestPowerPairedDrawGeneratorParts(unittest.TestCase):
         # Set up the brackets
         for p, b in b2.items():
             for i, x in enumerate(b):
-                 if isinstance(x[-1], (str, list)) and len(x) > 2:
+                if isinstance(x[-1], (str, list)) and len(x) > 2:
                     flags = [x[-1]] if isinstance(x[-1], str) else x[-1]
                     x = x[:-1]
                 else:
