@@ -395,11 +395,11 @@ class TestPowerPairedDrawGenerator(unittest.TestCase):
                              # would give history conflict
          (11, 14, ["1u1d_inst"], [], [], True),
          (6, 4, ["1u1d_other"], [], [], False),
-         (8, 7, [], [], [], True),
+         (8, 7, [], [], ['pullup'], True),
          (9, 22, [], [], [], True),
          (15, 23, [], [], [], True),
          (18, 24, [], [], [], False),
-         (1, 25, [], [], [], False),
+         (1, 25, [], [], ['pullup'], False),
          (5, 20, [], [], [], False),
          (10, 21, [], [], [], False),
          (16, 26, [], [], ["bub_up_hist"], True),
