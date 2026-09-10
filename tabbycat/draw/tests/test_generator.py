@@ -399,7 +399,7 @@ class TestPowerPairedDrawGenerator(unittest.TestCase):
          (9, 22, [], [], [], True),
          (15, 23, [], [], [], True),
          (18, 24, [], [], [], False),
-         (1, 25, [], [], ['pullup'], False),
+         (1, 25, [], ['pullup'], [], False),
          (5, 20, [], [], [], False),
          (10, 21, [], [], [], False),
          (16, 26, [], [], ["bub_up_hist"], True),
