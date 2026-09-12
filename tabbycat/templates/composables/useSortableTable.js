@@ -37,6 +37,8 @@ export function useSortableTable ({ headers, sortableData, getSortableProperty, 
       return sortableData.value
     }
 
+    const direction = sortOrder.value === 'desc' ? -1 : 1
+
     const sorted = sortableData.value.slice(0).sort((a, b) => {
       const aCellData = getSortableProperty(a, orderedHeaderIndex)
       const bCellData = getSortableProperty(b, orderedHeaderIndex)
@@ -48,14 +50,11 @@ export function useSortableTable ({ headers, sortableData, getSortableProperty, 
         return -1
       }
       if (_.isString(aCellData) || _.isString(bCellData)) {
-        return String(aCellData).localeCompare(String(bCellData), undefined, { sensitivity: 'base' })
+        return direction * String(aCellData).localeCompare(String(bCellData), undefined, { sensitivity: 'base' })
       }
-      return Number(aCellData) - Number(bCellData)
+      return direction * (Number(aCellData) - Number(bCellData))
     })
 
-    if (sortOrder.value === 'desc') {
-      return sorted.reverse()
-    }
     return sorted
   })
 
