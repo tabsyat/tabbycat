@@ -6,7 +6,7 @@ databases:
 
 services:
   - type: web
-    name: slsnoviceintras26
+    name: 10IUDC
     env: python
     plan: free
     region: oregon
