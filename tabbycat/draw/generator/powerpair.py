@@ -1,3 +1,4 @@
+import logging
 import math
 import random
 from collections import OrderedDict
@@ -15,7 +16,8 @@ from ..types import DebateSide
 
 if TYPE_CHECKING:
     from participants.models import Team
-
+    
+logger = logging.getLogger(__name__)
 
 class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
     """Power-paired draw.
@@ -173,6 +175,7 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         pct = self.options["pullup_eligible_pct"]
         n = len(teams)
         eligible_count = min(n, max(math.floor(pct * n), 2))
+        logger.warning(f"[eligible_pct debug] n={n}, pct={pct}, eligible_count={eligible_count}, teams={[getattr(t, 'short_name', t) for t in teams]}")
         ranked = sorted(teams, key=lambda t: (t.npullups, -t.speaks_sum))
         return ranked[:eligible_count]
 
