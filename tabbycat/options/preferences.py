@@ -324,6 +324,16 @@ class DrawPullupRestriction(ChoicePreference):
     )
     default = 'none'
 
+@tournament_preferences_registry.register
+class DrawPullupEligiblePct(FloatPreference):
+    help_text = _("Only used when pullup restriction is set to 'eligible pool'. The eligible pool "
+        "for a pullup is the larger of the top 2 teams, or this percentage of the bracket "
+        "below, rounded down.")
+    verbose_name = _("Pullup eligible pool percentage")
+    section = draw_rules
+    name = 'draw_pullup_eligible_pct'
+    default = 0.25
+    field_kwargs = {'validators': [MinValueValidator(0.0), MaxValueValidator(1.0)]}
 
 @tournament_preferences_registry.register
 class DrawPullupPenalty(IntegerPreference):
