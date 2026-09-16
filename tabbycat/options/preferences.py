@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.core.validators import EmailValidator, MinValueValidator, validate_slug
+from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator, validate_slug
 from django.forms import SelectMultiple
 from django.utils.translation import gettext_lazy as _
 from django_summernote.widgets import SummernoteWidget
