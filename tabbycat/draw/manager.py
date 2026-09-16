@@ -36,6 +36,7 @@ OPTIONS_TO_CONFIG_MAPPING = {
     "odd_bracket"           : "draw_rules__draw_odd_bracket",
     "pairing_method"        : "draw_rules__draw_pairing_method",
     "pullup_restriction"    : "draw_rules__draw_pullup_restriction",
+    "pullup_eligible_pct"   : "draw_rules__draw_pullup_eligible_pct",
     "max_times_per_side"    : "draw_rules__max_times_per_side",
     "pullup"                : "draw_rules__bp_pullup_distribution",
     "position_cost"         : "draw_rules__bp_position_cost",
@@ -247,7 +248,7 @@ class PowerPairedDrawManager(BaseDrawManager):
         if self.teams_in_debate == 2:
             options.extend([
                 "avoid_conflicts", "odd_bracket", "pairing_method",
-                "pullup_restriction", "side_allocations",
+                "pullup_restriction", "pullup_eligible_pct", "side_allocations",
                 "max_times_on_one_side", "pullup_penalty",
             ])
         elif self.teams_in_debate == 4:
@@ -260,8 +261,13 @@ class PowerPairedDrawManager(BaseDrawManager):
         teams = self.round.tournament.team_set.filter(id__in=[t.id for t in teams])
 
         metrics = self.round.tournament.pref('team_standings_precedence')
+        pullup_restriction = self.round.tournament.pref('draw_pullup_restriction')
         pullup_metric = BasePowerPairedDrawGenerator.PULLUP_RESTRICTION_METRICS[self.round.tournament.pref('draw_pullup_restriction')]
         extra_metrics = {pullup_metric} if pullup_metric is not None else set()
+
+        if pullup_restriction == "eligible_pct":
+            extra_metrics.add("npullups")
+            extra_metrics.add("speaks_sum")
 
         pullup_debates_penalty = self.round.tournament.pref("pullup_debates_penalty")
         if pullup_debates_penalty > 0:
@@ -287,6 +293,9 @@ class PowerPairedDrawManager(BaseDrawManager):
                 setattr(team, pullup_metric, standing.metrics[pullup_metric])
             if pullup_penalty > 0:
                 team.npullups = standing.metrics.get('npullups', 0)
+            if pullup_restriction == "eligible_pct":
+                team.npullups = standing.metrics.get('npullups', 0)
+                team.speaks_sum = standing.metrics.get('speaks_sum', 0)
             if self.round.tournament.pref("draw_odd_bracket") == 'pullup_lowest_ds_rank_npulls':
                 team.npullups = standing.metrics.get('npullups')
                 team.draw_strength_rank = standing.metrics.get('draw_strength_rank')
