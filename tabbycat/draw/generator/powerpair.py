@@ -106,6 +106,9 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         if pullup_metric is not None:
             self.check_teams_for_attribute(pullup_metric, checkfunc=lambda x: isinstance(x, (int, float)))
 
+        if self.options["pullup_restriction"] == "eligible_pct":
+            self.check_teams_for_attribute("speaks_sum", checkfunc=lambda x: isinstance(x, (int, float)))
+
     def generate(self):
         brackets = self._make_raw_brackets()
         self.resolve_odd_brackets(brackets)  # operates in-place
@@ -295,7 +298,7 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
                 swap_team = brackets[points-0.5][0]  # Bottom team
                 pool = self._pullup_pools.get(points, None)
                 eligible = pool is None or swap_team in pool
-                if not _check_conflict(swap_team, teams[0]):
+                if eligible and not _check_conflict(swap_team, teams[0]):
                     self.add_team_flag(teams[1], (conflict == 1) and "bub_dn_inst" or "bub_dn_hist")
                     self.add_team_flag(swap_team, "bub_dn_accom")
                     self.remove_team_flag(teams[1], "pullup")
