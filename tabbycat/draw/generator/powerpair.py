@@ -159,6 +159,9 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
             metric = self.PULLUP_RESTRICTION_METRICS[option]
         except KeyError:
             raise ValueError("Invalid option for pullup_restriction: {0}".format(option))
+        
+        if option == "eligible_pct":
+            return self._eligible_pct_pool(teams)
 
         if metric is None:
             return teams
