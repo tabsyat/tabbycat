@@ -248,7 +248,14 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
                 teams.remove(pullup_team)
                 new[points+0.5] = [odd_team, pullup_team]
                 self.add_team_flag(pullup_team, "pullup")
-                self._pullup_pools[points+0.5] = eligible[1:]
+
+                if self.options["pullup_restriction"] == "eligible_pct":
+                    min_pu = eligible[0].npullups
+                    alive = [t for t in eligible if t.npullups == min_pu]
+                    self._pullup_pools[points+0.5] = [t for t in alive if t != pullup_team]
+                else:
+                    self._pullup_pools[points+0.5] = eligible[1:]
+
                 odd_team = None
             if len(teams) % 2 != 0:
                 odd_team = teams.pop()
@@ -301,16 +308,11 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
                     continue
 
             # bubble down, if bubble up didn't work
-            # bubble down, if bubble up didn't work
             if points-0.5 in brackets:
                 lower_bracket = brackets[points-0.5]
                 if self.options["pullup_restriction"] == "eligible_pct":
                     pool = self._pullup_pools.get(points, None)
-                    if pool:
-                        min_pu = min(t.npullups for t in pool)
-                        candidates = [t for t in lower_bracket if t in pool and t.npullups == min_pu]
-                    else:
-                        candidates = lower_bracket if pool is None else []
+                    candidates = lower_bracket if pool is None else [t for t in lower_bracket if t in pool]
                 else:
                     candidates = [lower_bracket[0]] if lower_bracket else []
 
