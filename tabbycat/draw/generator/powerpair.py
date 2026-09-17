@@ -302,6 +302,7 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
                 lower_bracket = brackets[points-0.5]
                 if self.options["pullup_restriction"] == "eligible_pct":
                     pool = self._pullup_pools.get(points, None)
+                    logger.warning(f"[bub_dn debug] points={points}, pool={[getattr(t,'short_name',t) for t in pool] if pool is not None else None}, pullup_pools_keys={list(self._pullup_pools.keys())}")
                     candidates = lower_bracket if pool is None else [t for t in lower_bracket if t in pool]
                 else:
                     candidates = [lower_bracket[0]] if lower_bracket else []
