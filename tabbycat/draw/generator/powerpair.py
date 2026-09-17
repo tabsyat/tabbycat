@@ -177,8 +177,8 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         eligible_count = min(n, max(math.floor(pct * n), 2))
         logger.warning(f"[eligible_pct debug] n={n}, pct={pct}, eligible_count={eligible_count}, teams={[getattr(t, 'short_name', t) for t in teams]}")
         subset = teams[:eligible_count]  # top N by bracket/standings rank — the actual "eligible pool" per 55.9.1
-        ranked = sorted(teams, key=lambda t: (t.npullups, -t.speaks_sum))
-        return ranked[:eligible_count]
+        ranked = sorted(subset, key=lambda t: (t.npullups, -t.speaks_sum))  # 55.9.1.1 tiebreak, applied within the pool only
+        return ranked
 
     # Odd bracket resolutions
     ODD_BRACKET_FUNCTIONS = {
