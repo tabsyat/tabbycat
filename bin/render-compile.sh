@@ -5,6 +5,7 @@ set -o errexit
 echo "-----> Install dependencies"
 python -m pip install pipenv
 pipenv install --system
+pip install "django-anymail[brevo]"
 
 echo "-----> I'm post-compile hook"
 cd ./tabbycat/
