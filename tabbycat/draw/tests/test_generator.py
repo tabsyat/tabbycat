@@ -158,7 +158,7 @@ class TestPowerPairedDrawGeneratorParts(unittest.TestCase):
         brackets = OrderedDict([
             (4, [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'A', 'bub_up_accom'), (5, 'C', 12, 'bub_up_inst')]),
             (3, [(6, 'C', 'pullup'), (7, 'D'), (8, 'A', 10), (9, 'B', 10)]),
-            (2, [(10, 'D', 8, 9, 'bub_dn_hist'), (11, 'A', 'bub_dn_accom', 'pullup'), (12, 'C', 5), (13, 'B'), (14, 'C', 15)]),
+            (2, [(10, 'D', 8, 9, 'bub_dn_hist'), (11, 'A', ['bub_dn_accom', 'pullup']), (12, 'C', 5), (13, 'B'), (14, 'C', 15)]),
             (1, [(15, 'C', 14), (16, 'C')]),
         ])
         expected = OrderedDict([
@@ -192,7 +192,7 @@ class TestPowerPairedDrawGeneratorParts(unittest.TestCase):
         brackets = OrderedDict([
             (4, [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'A', 'bub_up_accom'), (5, 'C', 12, 'bub_up_inst')]),
             (3, [(6, 'C', 'pullup'), (7, 'D'), (8, 'D'), (9, 'B', 10)]),
-            (2, [(10, 'D', 9, 'bub_dn_hist'), (11, 'A', 'bub_dn_accom', 'pullup'), (12, 'C', 5), (13, 'B'), (14, 'C', 15)]),
+            (2, [(10, 'D', 9, 'bub_dn_hist'), (11, 'A', ['bub_dn_accom', 'pullup']), (12, 'C', 5), (13, 'B'), (14, 'C', 15)]),
             (1, [(15, 'C', 14), (16, 'C')]),
         ])
         expected = OrderedDict([
