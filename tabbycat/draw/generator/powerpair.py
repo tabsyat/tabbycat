@@ -1,4 +1,3 @@
-import math
 import random
 from collections import OrderedDict
 from itertools import groupby
@@ -154,10 +153,10 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
             metric = self.PULLUP_RESTRICTION_METRICS[option]
         except KeyError:
             raise ValueError("Invalid option for pullup_restriction: {0}".format(option))
-            
+
         if option == "subset_pct":
             return self._subset_pct_pool(teams)
-            
+
         if metric is None:
             return teams
         else:
@@ -169,9 +168,9 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         ranked with the best pullup candidate first: fewest pullups to date. 
         'pct' is the 'pullup_subset_pct' option. The pool is capped at the size of
         'teams' so it never over-requests from a small bracket."""
-        pct = self.options["pullup_subset_pct"] / 100
+        pct = self.options["pullup_subset_pct"]
         n = len(teams)
-        subset_count = min(n, max(math.floor(pct * n), 2))
+        subset_count = min(n, max((pct * n) // 100, 2))
         subset = teams[:subset_count]
         ranked = sorted(subset, key=lambda t: t.npullups)
         return ranked
