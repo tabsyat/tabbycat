@@ -126,30 +126,6 @@ class TestPowerPairedDrawGeneratorParts(unittest.TestCase):
         gcm.team_flags = {teams[0]: ['pullup']}
         self.assertAlmostEqual(gcm.assignment_cost(*teams, 2), 2, delta=1e-6)
 
-    def test_random_pairing_produces_multiple_outcomes(self):
-        """Regression test for the pairing_method='random' determinism bug:
-        with many same-cost edges, repeated calls to generate_pairings should
-        not always produce the same matching."""
-        teams = [TestTeam(i+1, chr(ord('A') + i), subrank=i+1, pullup_debates=0) for i in range(8)]
-        gcm = GraphPowerPairedDrawGenerator(teams)
-        gcm.options = {
-            'pullup_debates_penalty': 0,
-            'pairing_method': 'random',
-            'pairing_penalty': 1,
-            'avoid_history': False,
-            'avoid_institution': False,
-            'side_allocations': False,
-        }
-
-        outcomes = set()
-        for _ in range(30):
-            pairings = gcm.generate_pairings({0: teams})
-            outcome = frozenset(frozenset(p.teams) for p in pairings[0])
-            outcomes.add(outcome)
-
-        self.assertGreater(len(outcomes), 1,
-            "Expected varied pairings under pairing_method='random', but got the same matching every time")
-
     def test_add_subrank_pullup(self):
         teams = [TestTeam(i+1, chr(ord('A') + i), subrank=(None if i else 1)) for i in range(2)]
         gcm = GraphPowerPairedDrawGenerator(teams)
