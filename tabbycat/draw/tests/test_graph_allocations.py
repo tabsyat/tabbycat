@@ -126,7 +126,7 @@ class TestPowerPairedDrawGeneratorParts(unittest.TestCase):
         gcm.team_flags = {teams[0]: ['pullup']}
         self.assertAlmostEqual(gcm.assignment_cost(*teams, 2), 2, delta=1e-6)
 
-        def test_random_pairing_produces_multiple_outcomes(self):
+    def test_random_pairing_produces_multiple_outcomes(self):
         """Regression test for the pairing_method='random' determinism bug:
         with many same-cost edges, repeated calls to generate_pairings should
         not always produce the same matching."""
