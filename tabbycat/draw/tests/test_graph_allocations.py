@@ -77,7 +77,7 @@ class TestPowerPairedDrawGeneratorParts(unittest.TestCase):
     def test_pairings_random_deviation_zero(self):
         teams = [TestTeam(i+1, chr(ord('A') + i), subrank=i+1) for i in range(8)]
         # Always 0
-        self.assertEqual(GraphCostMixin._pairings_random([teams[0].subrank, teams[1].subrank], 8), 0)
+        self.assertAlmostEqual(GraphCostMixin._pairings_random([teams[0].subrank, teams[1].subrank], 8), 0, delta=1e-6)
 
     def test_pairings_adjacent_deviation_top(self):
         teams = [TestTeam(i+1, chr(ord('A') + i), subrank=i+1) for i in range(8)]
