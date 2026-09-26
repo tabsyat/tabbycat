@@ -64,11 +64,10 @@ class GraphRandomDrawMixin:
         return self.generate_pairings({0: self._get_pools()})[0]
 
     def generate_pairings(self, brackets):
-        brackets = OrderedDict(
-            (points, random.sample(teams, len(teams)))
-            for points, teams in brackets.items()
-        )
+        for teams in brackets.values():
+            random.shuffle(teams)
         return super().generate_pairings(brackets)
+
 
 class SwapRandomDrawMixin:
 
