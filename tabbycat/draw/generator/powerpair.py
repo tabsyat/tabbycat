@@ -9,6 +9,7 @@ from django.utils.translation import gettext as _
 from .common import BasePairDrawGenerator, DrawFatalError, DrawUserError
 from .graph import GraphAllocatedSidesMixin, GraphGeneratorMixin
 from .one_up_one_down import OneUpOneDownSwapper
+from ..generator.random import GraphRandomDrawMixin
 from .pairing import Pairing
 from ..types import DebateSide
 
@@ -483,11 +484,11 @@ class AustralsPairingMixin:
                     pairing.teams = list(new)
 
 
-class GraphPowerPairedDrawGenerator(GraphCostMixin, GraphGeneratorMixin, BasePowerPairedDrawGenerator):
+class GraphPowerPairedDrawGenerator(GraphRandomDrawMixin, GraphCostMixin, GraphGeneratorMixin, BasePowerPairedDrawGenerator):
     pass
 
 
-class SingleGraphPowerPairedDrawGenerator(GraphCostMixin, GraphGeneratorMixin, BasePowerPairedDrawGenerator):
+class SingleGraphPowerPairedDrawGenerator(GraphRandomDrawMixin, GraphCostMixin, GraphGeneratorMixin, BasePowerPairedDrawGenerator):
 
     ODD_BRACKET_FUNCTIONS = {
         "pullup_top"                 : "_pullup_top",
