@@ -1,6 +1,7 @@
 """Draw generators for randomly drawn rounds, both two-team and BP."""
 
 import random
+from collections import OrderedDict
 from itertools import islice
 
 from django.utils.translation import gettext as _
@@ -61,15 +62,21 @@ class BaseRandomDrawGenerator(RandomPairingsMixin, BasePairDrawGenerator):
 
 class GraphRandomDrawMixin:
     def make_random_pairings(self, teams_in_debate):
-        pools = self._get_pools()
-        print("BEFORE:", pools)
-        if pools and isinstance(pools[0], list):
-            for pool in pools:
-                random.shuffle(pool)
-        else:
-            random.shuffle(pools)
-        print("AFTER:", pools)
-        return self.generate_pairings({0: pools})[0]
+        return self.generate_pairings({0: self._get_pools()})[0]
+
+
+class RandomPairingMethodMixin:
+    """Shuffles teams within each bracket before matching, so that
+    pairing_method='random' actually produces varied minimum-cost
+    matchings rather than a deterministic one."""
+
+    def generate_pairings(self, brackets):
+        if self.options.get("pairing_method") == "random":
+            brackets = OrderedDict(
+                (points, random.sample(teams, len(teams)))
+                for points, teams in brackets.items()
+            )
+        return super().generate_pairings(brackets)
 
 
 class SwapRandomDrawMixin:
