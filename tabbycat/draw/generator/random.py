@@ -62,11 +62,13 @@ class BaseRandomDrawGenerator(RandomPairingsMixin, BasePairDrawGenerator):
 class GraphRandomDrawMixin:
     def make_random_pairings(self, teams_in_debate):
         pools = self._get_pools()
+        print("BEFORE:", pools)
         if pools and isinstance(pools[0], list):
             for pool in pools:
                 random.shuffle(pool)
         else:
             random.shuffle(pools)
+        print("AFTER:", pools)
         return self.generate_pairings({0: pools})[0]
 
 
