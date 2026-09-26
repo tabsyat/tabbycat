@@ -1,3 +1,4 @@
+import random
 from collections import OrderedDict
 from typing import Optional, TYPE_CHECKING
 
@@ -67,6 +68,9 @@ class GraphGeneratorMixin:
         i = 0
         for j, (points, teams) in enumerate(brackets.items()):
             pairings[points] = []
+            if self.options.get("pairing_method") == "random":
+                teams = list(teams)
+                random.shuffle(teams)
             graph = nx.Graph()
             n_teams = self.get_n_teams(teams)
             for k, t1 in enumerate(teams):
