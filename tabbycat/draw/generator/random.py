@@ -60,6 +60,11 @@ class BaseRandomDrawGenerator(RandomPairingsMixin, BasePairDrawGenerator):
 
 
 class GraphRandomDrawMixin:
+    def _get_pools(self):
+        teams = super()._get_pools()
+        random.shuffle(teams)
+        return teams
+
     def make_random_pairings(self, teams_in_debate):
         return self.generate_pairings({0: self._get_pools()})[0]
 
