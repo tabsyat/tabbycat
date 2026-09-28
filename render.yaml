@@ -6,7 +6,7 @@ databases:
 
 services:
   - type: web
-    name: tabby-website
+    name: idlwidpsc26
     env: python
     plan: free
     region: singapore
