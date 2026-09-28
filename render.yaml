@@ -9,7 +9,7 @@ services:
     name: idlwidpsc26
     env: python
     plan: free
-    region: singapore
+    region: oregon
     buildCommand: "./bin/render-compile.sh"
     startCommand: "npm run render-serve"
     envVars:
