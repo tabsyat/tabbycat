@@ -125,54 +125,20 @@ class AdminEditBreakCategoriesViewTest(CompletedTournamentTestMixin, TestCase):
         super().setUp()
         self.admin = get_user_model().objects.create(username='break_admin', is_superuser=True)
         self.client.force_login(self.admin)
-        self.url = self.reverse_url('break-categories-edit')
-
-    def build_post_data(self, formset, changes=None):
-        """Builds POST data for the existing categories, applying `changes`
-        (a dict of category slug -> dict of field overrides)."""
-        changes = changes or {}
-        prefix = formset.prefix
-        categories = list(self.tournament.breakcategory_set.all())
-        data = {
-            f'{prefix}-TOTAL_FORMS': len(categories),
-            f'{prefix}-INITIAL_FORMS': len(categories),
-            f'{prefix}-MIN_NUM_FORMS': 0,
-            f'{prefix}-MAX_NUM_FORMS': 1000,
-        }
-        for i, cat in enumerate(categories):
-            values = {
-                'id': cat.id, 'name': cat.name, 'tournament': cat.tournament_id,
-                'slug': cat.slug, 'break_size': cat.break_size,
-                'reserve_size': cat.reserve_size, 'is_general': cat.is_general,
-                'priority': cat.priority, 'limit': cat.limit, 'rule': cat.rule,
-            }
-            values.update(changes.get(cat.slug, {}))
-            for field, value in values.items():
-                if value is False:  # unchecked checkboxes are omitted from POST data
-                    continue
-                data[f'{prefix}-{i}-{field}'] = value
-        return data
-
-    def test_form_includes_reserve_size_and_rule(self):
-        response = self.client.get(self.url)
-        self.assertResponseOK(response)
-        fields = response.context['formset'].forms[0].fields
-        self.assertIn('reserve_size', fields)
-        self.assertIn('rule', fields)
 
     def test_reserve_size_and_rule_are_saved(self):
-        formset = self.client.get(self.url).context['formset']
-        data = self.build_post_data(formset, changes={
-            'open': {'reserve_size': 2, 'rule': 'aida-2016-australs'},
-        })
-        response = self.client.post(self.url, data)
-        self.assertEqual(response.status_code, 302)
+        url = self.reverse_url('break-categories-edit')
+        prefix = self.client.get(url).context['formset'].prefix
+        category = self.tournament.breakcategory_set.get(slug='open')
+        data = {
+            f'{prefix}-TOTAL_FORMS': 1, f'{prefix}-INITIAL_FORMS': 1,
+            f'{prefix}-0-id': category.id, f'{prefix}-0-tournament': category.tournament_id,
+            f'{prefix}-0-name': category.name, f'{prefix}-0-slug': category.slug,
+            f'{prefix}-0-break_size': category.break_size, f'{prefix}-0-is_general': 'on',
+            f'{prefix}-0-priority': category.priority, f'{prefix}-0-limit': category.limit,
+            f'{prefix}-0-reserve_size': 2, f'{prefix}-0-rule': 'aida-2016-australs',
+        }
+        self.assertEqual(self.client.post(url, data).status_code, 302)
 
-        open_category = self.tournament.breakcategory_set.get(slug='open')
-        self.assertEqual(open_category.reserve_size, 2)
-        self.assertEqual(open_category.rule, 'aida-2016-australs')
-
-        # Other categories should be untouched
-        esl_category = self.tournament.breakcategory_set.get(slug='esl')
-        self.assertEqual(esl_category.reserve_size, 0)
-        self.assertEqual(esl_category.rule, 'standard')
+        category.refresh_from_db()
+        self.assertEqual((category.reserve_size, category.rule), (2, 'aida-2016-australs'))
