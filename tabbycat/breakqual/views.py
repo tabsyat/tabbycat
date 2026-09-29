@@ -264,6 +264,7 @@ class BreakCategoryModelForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.tournament = kwargs.pop('tournament')
         super().__init__(*args, **kwargs)
+        self.fields['reserve_size'].initial = 2
 
     def clean_break_size(self):
         bs = self.cleaned_data['break_size']
