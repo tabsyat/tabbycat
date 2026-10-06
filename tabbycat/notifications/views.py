@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from email.utils import formataddr
 from smtplib import SMTPException, SMTPResponseException
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from anymail.exceptions import AnymailError
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -69,7 +70,7 @@ class TestEmailView(WarnAboutLegacySendgridConfigVarsMixin, AdministratorMixin, 
             else:
                 logger.warning("SMTP response exception in test email", exc_info=True)
 
-        except (ConnectionError, SMTPException) as e:
+        except (ConnectionError, SMTPException, AnymailError) as e:
             messages.error(self.request,
                 _("There was an error sending the test email: %(error)s") % {'error': str(e)})
             logger.warning("Other error in test email", exc_info=True)

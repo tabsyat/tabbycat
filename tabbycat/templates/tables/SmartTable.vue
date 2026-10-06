@@ -8,8 +8,7 @@ import CheckCell from '../tables/CheckCell.vue'
 import AjaxSelectCell from '../tables/AjaxSelectCell.vue'
 import BallotsCell from '../../results/templates/BallotsCell.vue'
 import { useSortableTable } from '../composables/useSortableTable.js'
-
-const FeedbackTrend = defineAsyncComponent(() => import('../graphs/FeedbackTrend.vue'))
+import FeedbackTrend from '../graphs/FeedbackTrend.vue'
 
 const props = defineProps({
   tableHeaders: Array,
