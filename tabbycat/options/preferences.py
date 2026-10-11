@@ -343,10 +343,9 @@ class DrawPullupRestriction(ChoicePreference):
 @tournament_preferences_registry.register
 class DrawPullupPercentage(IntegerPreference):
     help_text = _("Only teams ranked within this percentage of the bracket below "
-        "(and always at least 2 teams) can be pulled up. This applies to the pull-up from "
-        "top/middle/bottom/random and intermediate bracket methods, and is applied before the "
-        "pullup restriction. It has no effect with pre-allocated sides or minimum cost matching "
-        "(including pullups). Leave at 100 (the whole bracket below) unless your rules require "
+        "(and always at least 2 teams) can be pulled up. Affects pull-up from top/bottom/middle/random "
+        "& intermediate brackets. No effect on pre-allocated sides or minimum cost matching "
+        "(including pullups). Leave at 100 always (the whole bracket below) unless certain rules require "
         "otherwise; Australs uses 25 with 'least pulled up so far'.")
     verbose_name = _("Pullup Candidate percentage")
     section = draw_rules
