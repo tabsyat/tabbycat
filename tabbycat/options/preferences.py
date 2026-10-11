@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.core.validators import EmailValidator, MinValueValidator, validate_slug
+from django.core.validators import EmailValidator, MaxValueValidator, MinValueValidator, validate_slug
 from django.forms import SelectMultiple
 from django.utils.translation import gettext_lazy as _
 from django_summernote.widgets import SummernoteWidget
@@ -333,22 +333,24 @@ class DrawPullupRestriction(ChoicePreference):
     choices = (
         ('none', _("No restriction")),
         ('least_to_date', _("Choose from teams who have been pulled up the fewest times so far")),
-        ('subset_pct', _("Choose from teams who have been pulled up the fewest times so far from a subset pool")),
         ('lowest_ds_wins', _("Choose from teams with the lowest draw strength by wins so far")),
         ('lowest_ds_speaks', _("Choose from teams with the lowest draw strength by speaks so far")),
     )
     default = 'none'
 
+
 @tournament_preferences_registry.register
-class DrawPullupSubsetPct(IntegerPreference):
-    help_text = _("Only used when pullup restriction is set to 'subset pool'. The subset pool "
-        "for a pullup is the larger of the top 2 teams, or this percentage of the bracket "
-        "below, rounded down. Enter a % value between 0 to 100")
-    verbose_name = _("Subset pool percentage")
+class DrawPullupPercentage(IntegerPreference):
+    help_text = _("Only teams ranked within this percentage of the bracket below "
+        "(and always at least 2 teams) are candidates for being pulled up. "
+        "Applied before the pullup restriction. 100 means every team in the bracket. "
+        "Australs rules use 25 with 'least pulled up so far'.")
+    verbose_name = _("Pullup candidate percentage")
     section = draw_rules
-    name = 'draw_pullup_subset_pct'
-    default = 25
-    field_kwargs = {'validators': [MinValueValidator(0.0)]}
+    name = 'draw_pullup_percentage'
+    default = 100
+    field_kwargs = {'validators': [MinValueValidator(0), MaxValueValidator(100)]}
+
 
 @tournament_preferences_registry.register
 class DrawPullupPenalty(IntegerPreference):
