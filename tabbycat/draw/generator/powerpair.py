@@ -290,24 +290,19 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
             if points-0.5 in brackets:
                 lower_bracket = brackets[points-0.5]
                 if self.options["pullup_restriction"] == "none":
-                    candidates = [lower_bracket[0]] if lower_bracket else []
+                    candidates = lower_bracket[:1]
                 else:
-                    pool = self._pullup_pools.get(points, None)
-                    candidates = lower_bracket if pool is None else [t for t in lower_bracket if t in pool]
+                    pool = self._pullup_pools[points]
+                    candidates = [t for t in lower_bracket if t in pool]
 
-                swapped = False
-                for swap_team in candidates:
-                    if not _check_conflict(swap_team, teams[0]):
-                        self.add_team_flag(teams[1], (conflict == 1) and "bub_dn_inst" or "bub_dn_hist")
-                        self.add_team_flag(swap_team, "bub_dn_accom")
-                        self.remove_team_flag(teams[1], "pullup")
-                        self.add_team_flag(swap_team, "pullup")
-                        idx = lower_bracket.index(swap_team)
-                        teams[1], lower_bracket[idx] = swap_team, teams[1]
-                        swapped = True
-                        break
-
-                if swapped:
+                swap_team = next((t for t in candidates if not _check_conflict(t, teams[0])), None)
+                if swap_team is not None:
+                    self.add_team_flag(teams[1], (conflict == 1) and "bub_dn_inst" or "bub_dn_hist")
+                    self.add_team_flag(swap_team, "bub_dn_accom")
+                    self.remove_team_flag(teams[1], "pullup")
+                    self.add_team_flag(swap_team, "pullup")
+                    idx = lower_bracket.index(swap_team)
+                    teams[1], lower_bracket[idx] = swap_team, teams[1]
                     continue
 
             # if nothing worked, add a "didn't work" flag
@@ -664,6 +659,7 @@ class PowerPairedWithAllocatedSidesDrawGenerator(BasePowerPairedDrawGenerator):
         "pairing_method"        : "fold",
         "avoid_conflicts"       : None,
         "pullup_restriction"    : "none",
+        "pullup_percentage"     : 100,
         "pullup_penalty"        : 0,
     }
 
