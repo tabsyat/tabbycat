@@ -39,15 +39,15 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
 
         "pullup_restriction" - Restriction on who can be pulled up. Permitted values:
 
-            "none"             - No restriction.
-            "least_to_date"    - Choose from teams who have been pulled up the
+            "none"              - No restriction.
+            "least_to_date"     - Choose from teams who have been pulled up the
                                  least number of times in previous rounds.
-            "lowest_ds_wins"   - Choose from teams who have the lowest draw strength by
+            "lowest_ds_wins"    - Choose from teams who have the lowest draw strength by
                                  wins (indicative of having been against easier teams)
-            "lowest_ds_speaks" - Choose from teams who have the lowest draw strength by
+            "lowest_ds_speaks"  - Choose from teams who have the lowest draw strength by
                                  speaks (indicative of having been against easier teams)
 
-            "pullup_percentage"- Only the highest-ranked teams making up this
+            "pullup_percentage" - Only the highest-ranked teams making up this
                                  percentage of the bracket being pulled from (and always at least
                                  2 teams) can be pulled up. Applied before "pullup_restriction".
                                  100 means no limit.
@@ -168,7 +168,6 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         else:
             least = min(getattr(team, metric) for team in teams)
             return [team for team in teams if getattr(team, metric) == least]
-
 
     # Odd bracket resolutions
     ODD_BRACKET_FUNCTIONS = {
