@@ -48,9 +48,9 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
                                  speaks (indicative of having been against easier teams)
 
         "pullup_percentage" - Only the highest-ranked teams making up this
-                            percentage of the bracket being pulled from (and always at least
-                            2 teams) can be pulled up. Applied before "pullup_restriction".
-                            100 means no limit.
+            percentage of the bracket being pulled from (and always at least
+            2 teams) can be pulled up. Applied before "pullup_restriction".
+            100 means the entire bracket below is considered.
 
         "pairing_method" - How to pair teams. Permitted values:
             (best explained by example, these examples have a ten-team bracket)
