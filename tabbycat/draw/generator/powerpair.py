@@ -47,10 +47,10 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
             "lowest_ds_speaks" - Choose from teams who have the lowest draw strength by
                                  speaks (indicative of having been against easier teams)
 
-            "pullup_percentage" - Only the highest-ranked teams making up this
-                                 percentage of the bracket being pulled from (and always at least
-                                 2 teams) can be pulled up. Applied before "pullup_restriction".
-                                 100 means no limit.
+        "pullup_percentage" - Only the highest-ranked teams making up this
+                            percentage of the bracket being pulled from (and always at least
+                            2 teams) can be pulled up. Applied before "pullup_restriction".
+                            100 means no limit.
 
         "pairing_method" - How to pair teams. Permitted values:
             (best explained by example, these examples have a ten-team bracket)
