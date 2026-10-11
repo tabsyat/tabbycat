@@ -47,6 +47,11 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
             "lowest_ds_speaks" - Choose from teams who have the lowest draw strength by
                                  speaks (indicative of having been against easier teams)
 
+            "pullup_percentage"- Only the highest-ranked teams making up this
+                                 percentage of the bracket being pulled from (and always at least
+                                 2 teams) can be pulled up. Applied before "pullup_restriction".
+                                 100 means no limit.
+
         "pairing_method" - How to pair teams. Permitted values:
             (best explained by example, these examples have a ten-team bracket)
 
@@ -76,7 +81,7 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         "pairing_method"        : "slide",
         "avoid_conflicts"       : "one_up_one_down",
         "pullup_restriction"    : "none",
-        "pullup_subset_pct"     : 25,   # only used when pullup_restriction == "subset_pct"
+        "pullup_percentage"     : 100,
         "pullup_debates_penalty": 0,
         "pullup_penalty"        : 0,
     }
@@ -139,7 +144,6 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
     # Pullup restrictions
     PULLUP_RESTRICTION_METRICS = {
         "least_to_date": "npullups",
-        "subset_pct" : "npullups",
         "lowest_ds_wins": "draw_strength",
         "lowest_ds_speaks": "draw_strength_speaks",
         "none": None,
@@ -154,8 +158,10 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         except KeyError:
             raise ValueError("Invalid option for pullup_restriction: {0}".format(option))
 
-        if option == "subset_pct":
-            return self._subset_pct_pool(teams)
+        # Only the highest-ranked teams (by percentage, minimum 2) are candidates
+        n = len(teams)
+        n_candidates = min(n, max((self.options["pullup_percentage"] * n) // 100, 2))
+        teams = teams[:n_candidates]
 
         if metric is None:
             return teams
@@ -163,17 +169,6 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
             least = min(getattr(team, metric) for team in teams)
             return [team for team in teams if getattr(team, metric) == least]
 
-    def _subset_pct_pool(self, teams):
-        """Returns the subset pullup pool as max(2, floor(pct * n)) teams,
-        ranked with the best pullup candidate first: fewest pullups to date. 
-        'pct' is the 'pullup_subset_pct' option. The pool is capped at the size of
-        'teams' so it never over-requests from a small bracket."""
-        pct = self.options["pullup_subset_pct"]
-        n = len(teams)
-        subset_count = min(n, max((pct * n) // 100, 2))
-        subset = teams[:subset_count]
-        ranked = sorted(subset, key=lambda t: t.npullups)
-        return ranked
 
     # Odd bracket resolutions
     ODD_BRACKET_FUNCTIONS = {
@@ -235,18 +230,12 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
         odd_team = None
         for points, teams in brackets.items():
             if odd_team:
-                subset = self._pullup_filter(teams)
-                pullup_team = subset[0]
+                candidates = self._pullup_filter(teams)
+                pullup_team = candidates[0]
                 teams.remove(pullup_team)
                 new[points+0.5] = [odd_team, pullup_team]
                 self.add_team_flag(pullup_team, "pullup")
-
-                if self.options["pullup_restriction"] == "subset_pct":
-                    min_pu = subset[0].npullups
-                    alive = [t for t in subset if t.npullups == min_pu]
-                    self._pullup_pools[points+0.5] = [t for t in alive if t != pullup_team]
-                else:
-                    self._pullup_pools[points+0.5] = subset[1:]
+                self._pullup_pools[points+0.5] = candidates[1:]
                 odd_team = None
             if len(teams) % 2 != 0:
                 odd_team = teams.pop()
