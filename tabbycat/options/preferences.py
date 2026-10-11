@@ -326,7 +326,8 @@ class DrawAvoidConflicts(ChoicePreference):
 @tournament_preferences_registry.register
 class DrawPullupRestriction(ChoicePreference):
     help_text = _("If using pull-ups, restrict which teams can be pulled up. "
-        "Two-team formats only. Has no effect on BP.")
+        "Two-team formats only. Affects pull-up from "
+        "top/middle/bottom/random and intermediate bracket methods. Has no effect on BP.")
     verbose_name = _("Pullup restriction")
     section = draw_rules
     name = 'draw_pullup_restriction'
@@ -342,9 +343,11 @@ class DrawPullupRestriction(ChoicePreference):
 @tournament_preferences_registry.register
 class DrawPullupPercentage(IntegerPreference):
     help_text = _("Only teams ranked within this percentage of the bracket below "
-        "(and always at least top 2 teams) are candidates for being pulled up. "
-        "Applied before the pullup restriction. 100 means every team in the bracket is eligible "
-        "to be pulled up. Australs uses 25% with 'least pulled up so far'.")
+        "(and always at least 2 teams) can be pulled up. This applies to the pull-up from "
+        "top/middle/bottom/random and intermediate bracket methods, and is applied before the "
+        "pullup restriction. It has no effect with pre-allocated sides or minimum cost matching "
+        "(including pullups). Leave at 100 (the whole bracket below) unless your rules require "
+        "otherwise; Australs uses 25 with 'least pulled up so far'.")
     verbose_name = _("Pullup Candidate percentage")
     section = draw_rules
     name = 'draw_pullup_percentage'
