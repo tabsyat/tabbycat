@@ -39,12 +39,12 @@ class BasePowerPairedDrawGenerator(BasePairDrawGenerator):
 
         "pullup_restriction" - Restriction on who can be pulled up. Permitted values:
 
-            "none"              - No restriction.
-            "least_to_date"     - Choose from teams who have been pulled up the
+            "none"             - No restriction.
+            "least_to_date"    - Choose from teams who have been pulled up the
                                  least number of times in previous rounds.
-            "lowest_ds_wins"    - Choose from teams who have the lowest draw strength by
+            "lowest_ds_wins"   - Choose from teams who have the lowest draw strength by
                                  wins (indicative of having been against easier teams)
-            "lowest_ds_speaks"  - Choose from teams who have the lowest draw strength by
+            "lowest_ds_speaks" - Choose from teams who have the lowest draw strength by
                                  speaks (indicative of having been against easier teams)
 
             "pullup_percentage" - Only the highest-ranked teams making up this
