@@ -659,7 +659,6 @@ class PowerPairedWithAllocatedSidesDrawGenerator(BasePowerPairedDrawGenerator):
         "pairing_method"        : "fold",
         "avoid_conflicts"       : None,
         "pullup_restriction"    : "none",
-        "pullup_percentage"     : 100,
         "pullup_penalty"        : 0,
     }
 
