@@ -4,6 +4,8 @@ import _ from 'lodash'
 import { computed, ref, toRef } from 'vue'
 import { useWebSocket } from '../../templates/composables/useWebSocket.js'
 import { useDjangoI18n } from '../../templates/composables/useDjangoI18n.js'
+import { normaliseSearch, searchGroups } from './checkinSearch.js'
+import SearchInput from '../../templates/components/SearchInput.vue'
 
 
 const props = defineProps({
@@ -24,7 +26,10 @@ const props = defineProps({
   },
 })
 
-const { gettext, tct } = useDjangoI18n()
+const { gettext, ngettext, tct } = useDjangoI18n()
+
+const searchText = ref('')
+const searchQuery = computed(() => normaliseSearch(searchText.value))
 
 const filterByPresence = ref({ All: true, Absent: false, Present: false })
 const events = ref([...(props.initialEvents ?? [])])
@@ -225,7 +230,7 @@ const annotatedVenues = computed(() => {
   return venues.map((venue) => {
     const venueCopy = { ...venue }
     const id = Array.isArray(venueCopy.identifier) ? venueCopy.identifier[0] : null
-    venueCopy.status = id ? _.find(events.value, ['identifier', id]) : false
+    venueCopy.status = id ? _.find(events.value, ['identifier', id]) || false : false
     venueCopy.name = venueCopy.display_name
     return venueCopy
   })
@@ -338,6 +343,9 @@ const entitiesBySortingSetting = computed(() => {
   }
   return entitiesByTime.value
 })
+
+const visibleGroups = computed(() => searchGroups(entitiesBySortingSetting.value, searchQuery.value))
+const resultCount = computed(() => visibleGroups.value.reduce((count, [, entities]) => count + entities.length, 0))
 
 const getEntityStatusClass = (entity) => {
   let css = ''
@@ -465,6 +473,23 @@ const forAdmin = toRef(props, 'forAdmin')
 
 <template>
   <div>
+    <div class="mb-3 d-print-none">
+      <search-input
+        id="checkin-search"
+        v-model="searchText"
+        :label="gettext('Search check-ins')"
+        :placeholder="gettext('Start typing to search')"
+      />
+      <small
+        class="form-text text-muted"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <template v-if="searchQuery">
+          {{ resultCount }} {{ ngettext('result', 'results', resultCount) }}
+        </template>
+      </small>
+    </div>
     <div class="d-lg-flex justify-content-lg-between mb-3">
       <div class="btn-group mb-md-0 mb-3">
         <button
@@ -554,13 +579,13 @@ const forAdmin = toRef(props, 'forAdmin')
     </div>
 
     <div
-      v-if="entitiesByPresence.length === 0 && isForVenues"
+      v-if="resultCount === 0 && isForVenues"
       class="alert alert-info"
     >
       {{ gettext('No matching rooms found.') }}
     </div>
     <div
-      v-if="entitiesByPresence.length === 0 && !isForVenues"
+      v-if="resultCount === 0 && !isForVenues"
       class="alert alert-info"
     >
       {{ gettext('No matching people found.') }}
@@ -570,7 +595,7 @@ const forAdmin = toRef(props, 'forAdmin')
     </div>
 
     <div
-      v-for="(entities, grouper) in entitiesBySortingSetting"
+      v-for="[grouper, entities] in visibleGroups"
       :key="entities[0].id"
       class="card mt-1"
     >

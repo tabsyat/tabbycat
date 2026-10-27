@@ -2,10 +2,74 @@
 Change Log
 ==========
 
-2.12.0 (TBD)
+2.13.0 (TBD)
 ------------
 
 *Release date: TBD*
+
+
+2.12.1
+------
+
+*Release date: 19 October 2026*
+
+- Fix BP elimination advancement when speaker scores are enabled, including selecting one winner in finals. (`#2957 <https://github.com/TabbycatDebate/tabbycat/pull/2957>`_)
+- Fix merging ballots with conflicting criterion scores and prevent incomplete criterion scores from being treated as complete. (`#2980 <https://github.com/TabbycatDebate/tabbycat/pull/2980>`_)
+- Fix graph random draws retaining deterministic team ordering and pairing ties. (`#2948 <https://github.com/TabbycatDebate/tabbycat/pull/2948>`_, `#2946 <https://github.com/TabbycatDebate/tabbycat/pull/2946>`_) Thank you to Chirag!
+- Fix minimum-cost matching allowing rematches when team history avoidance is enabled, and correct fold-pairing penalties. (`#2974 <https://github.com/TabbycatDebate/tabbycat/pull/2974>`_)
+- Fix draw-strength pullup selection, including teams with no previous opponents. (`#2974 <https://github.com/TabbycatDebate/tabbycat/pull/2974>`_)
+- Validate round-robin seeds in all debate formats. (`#2964 <https://github.com/TabbycatDebate/tabbycat/pull/2964>`_)
+- Report missing previous-round results before generating elimination draws. (`#2963 <https://github.com/TabbycatDebate/tabbycat/pull/2963>`_) Thank you to Teymour Aldridge!
+- Validate that debates have at least one team and teams have at least one substantive speaker. (`#2962 <https://github.com/TabbycatDebate/tabbycat/pull/2962>`_) Thank you to Teymour Aldridge!
+- Fix draft-draw details and seeded-draw seed columns not being displayed. (`#2983 <https://github.com/TabbycatDebate/tabbycat/pull/2983>`_)
+- Keep feedback available for completed rounds when no rounds are current, including after the tournament ends. (`#2970 <https://github.com/TabbycatDebate/tabbycat/pull/2970>`_)
+- Remove introductory text from printable feedback forms. (`#2959 <https://github.com/TabbycatDebate/tabbycat/pull/2959>`_) Thank you to Chirag!
+- Fix public results pages for rounds without pairings. (`#2981 <https://github.com/TabbycatDebate/tabbycat/pull/2981>`_)
+- Fix dashboard ballot-loading race conditions. (`#2984 <https://github.com/TabbycatDebate/tabbycat/pull/2984>`_)
+- Fix unchecked rooms displaying as checked in. (`#2985 <https://github.com/TabbycatDebate/tabbycat/pull/2985>`_) Thank you to Alekh Bhardwaj!
+- Fix partial API ballot updates, action logging, debate check-ins, preformed-panel creation responses, and speaker round-score pagination. (`#2986 <https://github.com/TabbycatDebate/tabbycat/pull/2986>`_)
+- Validate participant name lengths through the API. (`#2977 <https://github.com/TabbycatDebate/tabbycat/pull/2977>`_)
+- Restore API documentation rendering. (`#2976 <https://github.com/TabbycatDebate/tabbycat/pull/2976>`_) Thank you to Alekh Bhardwaj!
+- Fix copying participant data to CSV. (`#2680 <https://github.com/TabbycatDebate/tabbycat/pull/2680>`_) Thank you to JWPCode!
+- Fix frontend module preload requests. (`#2951 <https://github.com/TabbycatDebate/tabbycat/pull/2951>`_) Thank you to Ido Wolf!
+- Display email form validation errors and preserve selected recipients when validation fails. (`#2973 <https://github.com/TabbycatDebate/tabbycat/pull/2973>`_)
+
+
+2.12.0 (Ukrainian Levkoy)
+-------------------------
+
+*Release date: 23 September 2026*
+
+- Expanded registration workflows:
+  - Institutions can register by invitation, view and update their responses, and receive confirmation statuses
+  - Team and adjudicator allocations can be capped, edited, and transferred between institutions
+  - Organizers can send bulk and custom emails to institutions and track invitation emails. Thank you to idowolf for improving bulk-email validation!
+- Updated and added tournament formats, which can make changes outside the settings:
+  - BP draws can now take a pullup penalty into account, and optionally have speaker scores in elimination rounds
+  - WSDC draws are now random within brackets, and automatically create criteria with different ranges between substantive and reply
+  - AP odd brackets use bubble-up-bubble down. Thank you to Chirag!
+  - Implemented round-robin draws, including support for schedule groups and a BP round-robin preset
+  - Added a Karl Popper (Czechia) tournament preset with median speaker-score aggregation and self-declared split ballots. Thank you to PiechZ!
+- Ido Wolf worked on tournament schedules:
+  - Redesigned the tournament schedule editor with day-by-day organization and automatic event titles
+  - Added API endpoints and iCalendar export of the public schedule and scheduled debate times
+- Added participant management views:
+  - Tracking institution gender breakdowns and N-1 adjudicator requirements across rounds. Thank you to Alelí for the institutional adjudicator rule table!
+  - New check-in filters for breaking participants
+  - Can automatically create institution conflicts in Edit Database.
+  - Allowed adding and removing speakers from teams in the admin interface. Thank you to Trudeau Okech!
+- Improved draw management with editable side pre-allocations and bulk copying of sides from earlier rounds. Thank you to PiechZ!
+- Added a public elimination-round bracket view, with links to team records. Thank you to Mahor Nagda for adding links!
+- Implemented new features for adjudicator feedback:
+  - Added configurable adjudicator feedback score increments. Thank you to Alekh Bhardwaj!
+  - Improved adjudicator feedback with new submission expectations versus allowable feedback with completion percentages. This makes feedback more flexible if a team wishes to submit feedback on the chair _and_ panellists.
+  - Added records of adjudicators testing others. Thank you to Mahor Nagda!
+- Improved tables with multi-column table sorting by 송은우 (@be-student) and fixed copying
+- API improvements:
+  - Added ballot check-in, adjudicator score, unconfirmed ballot, and public current standings support
+  - Improved round standings, validation, error responses, and action logging
+- Upgraded the frontend to Vue 3 and Vite
+- \+ bug fixes and optimizations!
 
 
 2.11.1

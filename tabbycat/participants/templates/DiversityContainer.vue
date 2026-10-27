@@ -2,9 +2,7 @@
 import { defineAsyncComponent, toRefs } from 'vue'
 import { useDjangoI18n } from '../../templates/composables/useDjangoI18n.js'
 import TextDisplay from '../../templates/graphs/TextDisplay.vue'
-
-const DonutChart = defineAsyncComponent(() => import('../../templates/graphs/DonutChart.vue'))
-
+import DonutChart from '../../templates/graphs/DonutChart.vue'
 
 const props = defineProps({
   graphsData: Object,

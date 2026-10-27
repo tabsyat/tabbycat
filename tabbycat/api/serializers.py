@@ -572,10 +572,11 @@ class SpeakerSerializer(serializers.ModelSerializer):
         checkin = fields.TournamentHyperlinkedIdentityField(tournament_field='team__tournament', view_name='api-speaker-checkin')
 
     url = fields.TournamentHyperlinkedIdentityField(tournament_field='team__tournament', view_name='api-speaker-detail')
-    name = fields.AnonymisingParticipantNameField()
+    name = fields.AnonymisingParticipantNameField(max_length=Person._meta.get_field('name').max_length)
     team = fields.TournamentHyperlinkedRelatedField(view_name='api-team-detail', queryset=Team.objects.all())
     categories = fields.TournamentHyperlinkedRelatedField(
         many=True,
+        default=list,
         view_name='api-speakercategory-detail',
         queryset=SpeakerCategory.objects.all(),
     )
@@ -655,7 +656,7 @@ class AdjudicatorSerializer(serializers.ModelSerializer):
         checkin = fields.TournamentHyperlinkedIdentityField(view_name='api-adjudicator-checkin')
 
     url = fields.TournamentHyperlinkedIdentityField(view_name='api-adjudicator-detail')
-    name = fields.AnonymisingParticipantNameField()
+    name = fields.AnonymisingParticipantNameField(max_length=Person._meta.get_field('name').max_length)
     institution = serializers.HyperlinkedRelatedField(
         allow_null=True,
         view_name='api-global-institution-detail',
@@ -664,16 +665,19 @@ class AdjudicatorSerializer(serializers.ModelSerializer):
 
     institution_conflicts = serializers.HyperlinkedRelatedField(
         many=True,
+        default=list,
         view_name='api-global-institution-detail',
         queryset=Institution.objects.all(),
     )
     team_conflicts = fields.TournamentHyperlinkedRelatedField(
         many=True,
+        default=list,
         view_name='api-team-detail',
         queryset=Team.objects.all(),
     )
     adjudicator_conflicts = fields.TournamentHyperlinkedRelatedField(
         many=True,
+        default=list,
         view_name='api-adjudicator-detail',
         queryset=Adjudicator.objects.all(),
     )
@@ -1030,6 +1034,7 @@ class VenueSerializer(serializers.ModelSerializer):
     url = fields.TournamentHyperlinkedIdentityField(view_name='api-venue-detail')
     categories = fields.TournamentHyperlinkedRelatedField(
         source='venuecategory_set', many=True,
+        default=list,
         view_name='api-venuecategory-detail',
         queryset=VenueCategory.objects.all(),
     )
@@ -1060,6 +1065,7 @@ class VenueCategorySerializer(serializers.ModelSerializer):
     url = fields.TournamentHyperlinkedIdentityField(view_name='api-venuecategory-detail')
     venues = fields.TournamentHyperlinkedRelatedField(
         many=True,
+        default=list,
         view_name='api-venue-detail',
         queryset=Venue.objects.all(),
     )
@@ -1420,6 +1426,9 @@ class FeedbackSerializer(serializers.ModelSerializer):
         except related_field.model.DoesNotExist:
             raise serializers.ValidationError("Source is not in debate")
 
+        # Feedback from elimination rounds doesn't count towards scores unless un-ignored
+        data.setdefault('ignored', debate.round.is_break_round)
+
         return super().validate(data)
 
     def get_submitter_fields(self):
@@ -1716,7 +1725,7 @@ class BallotSerializer(serializers.ModelSerializer):
         return ballot
 
     def update(self, instance, validated_data):
-        if validated_data['confirmed'] and not instance.confirmed:
+        if validated_data.get('confirmed') and not instance.confirmed:
             instance.confirmer = self.context['request'].user
             instance.confirm_timestamp = timezone.now()
 

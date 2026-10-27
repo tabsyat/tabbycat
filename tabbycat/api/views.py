@@ -14,7 +14,7 @@ from dynamic_preferences.api.serializers import PreferenceSerializer
 from dynamic_preferences.api.viewsets import PerInstancePreferenceViewSet
 from push_notifications.api.rest_framework import WebPushDeviceViewSet as BaseWebPushDeviceViewSet
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.fields import DateTimeField
 from rest_framework.generics import CreateAPIView, GenericAPIView, get_object_or_404, ListAPIView, RetrieveUpdateAPIView
 from rest_framework.mixins import ListModelMixin
@@ -38,6 +38,7 @@ from draw.models import Debate, DebateTeam
 from options.models import TournamentPreferenceModel
 from participants.models import Adjudicator, Institution, Person, Speaker, SpeakerCategory, Team
 from results.models import SpeakerScore, TeamScore
+from standings.base import StandingsError
 from standings.speakers import SpeakerStandingsGenerator
 from standings.teams import TeamStandingsGenerator
 from tournaments.mixins import TournamentFromUrlMixin
@@ -658,7 +659,7 @@ class BaseCheckinsView(AdministratorAPIMixin, TournamentAPIMixin, APIView):
             checkin = Event.objects.create(identifier=obj.checkin_identifier,
                                            tournament=self.tournament)
             checkin_dict = checkin.serialize()
-            checkin_dict['owner_name'] = obj.name
+            checkin_dict['owner_name'] = obj.matchup if isinstance(obj, Debate) else obj.name
         else:
             checkins = get_unexpired_checkins(self.tournament, self.window_preference_pref)
             checkins.filter(identifier=obj.checkin_identifier).delete()
@@ -834,6 +835,12 @@ def get_metrics_params(generator):
         },
     }
     desc_default = '; default is tournament settings'
+    if generator is SpeakerStandingsGenerator:
+        # Score criteria are per-tournament, so their metric keys can't be
+        # enumerated in a static schema.
+        desc_default += ('. Score criteria also provide the metrics '
+            '`criterion_avg_<seq>` and `criterion_total_<seq>`, where `<seq>` is '
+            "the criterion's sequence number")
     return [
         OpenApiParameter('metrics',
             description='Rank participants with these metrics' + desc_default,
@@ -880,8 +887,11 @@ class BaseStandingsView(TournamentAPIMixin, TournamentPublicAPIMixin, GenericAPI
 
         queryset = self.get_queryset()
         metrics, extra_metrics = self.get_metrics()
-        generator = self.generator(metrics, ('rank',), extra_metrics, **self.generator_kwargs)
-        standings = generator.generate(queryset, round=self.get_max_round())
+        try:
+            generator = self.generator(metrics, ('rank',), extra_metrics, **self.generator_kwargs)
+            standings = generator.generate(queryset, round=self.get_max_round())
+        except StandingsError as e:
+            raise ValidationError({'detail': str(e)}) from e
         serializer = self.get_serializer(iter(standings), many=True)
         return Response(serializer.data)
 
@@ -917,12 +927,15 @@ class SubstantiveSpeakerStandingsView(BaseStandingsView):
 
     @property
     def generator_kwargs(self):
+        # Needed for the generator to build this tournament's score criterion metrics.
+        kwargs = {'tournament': self.tournament}
         missable = -1 if self.missable_preference is None else self.tournament.pref(self.missable_preference)
         if missable < 0:
-            return {}
+            return kwargs
         total_prelim_rounds = self.tournament.round_set.filter(
             stage=Round.Stage.PRELIMINARY).count()
-        return {'rank_filter': (self.missable_field, total_prelim_rounds - missable)}
+        kwargs['rank_filter'] = (self.missable_field, total_prelim_rounds - missable)
+        return kwargs
 
     def get_metrics(self):
         metrics, extra_metrics = super().get_metrics()
@@ -1024,20 +1037,33 @@ class SpeakerRoundStandingsRoundsView(TournamentAPIMixin, TournamentPublicAPIMix
     list_permission = Permission.VIEW_SPEAKERSSTANDINGS
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        data = {s.id: s for s in qs}
+        return super().get_queryset().order_by('pk')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        speakers = page if page is not None else queryset
+        data = self.get_round_scores(speakers)
+        serializer = self.get_serializer(data, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+    def get_round_scores(self, speakers):
+        data = {s.id: s for s in speakers}
 
         # Bulk load debateteams for all speakers' teams (avoids N+1 from per-speaker access)
         team_ids = list({s.team_id for s in data.values()})
         debateteams_by_team_id = defaultdict(list)
-        for dt in DebateTeam.objects.filter(team_id__in=team_ids).select_related('debate__round__tournament'):
+        debate_teams = DebateTeam.objects.filter(team_id__in=team_ids).select_related('debate__round__tournament').order_by('debate__round__seq', 'pk')
+        for dt in debate_teams:
             debateteams_by_team_id[dt.team_id].append(dt)
 
         params_serializer = SpeakerRoundStandingsRoundsParamsSerializer(data=self.request.query_params, context={'tournament': self.tournament})
         params_serializer.is_valid(raise_exception=True)
 
         speaker_scores = SpeakerScore.objects.select_related(
-            'speaker', 'debate_team__debate__round__tournament', 'ballot_submission__debate__round__tournament',
+            'debate_team__debate__round__tournament', 'ballot_submission__debate__round__tournament',
         ).filter(
             ballot_submission__confirmed=True, speaker_id__in=data.keys(),
         ).order_by('speaker_id', 'debate_team_id', 'position')
@@ -1074,7 +1100,7 @@ class SpeakerRoundStandingsRoundsView(TournamentAPIMixin, TournamentPublicAPIMix
                     speaker_rounds[dt] = debate_team
                 speaker_rounds[dt].scores.extend(round_scores)
 
-        return data.values()
+        return list(data.values())
 
 
 @extend_schema(tags=['standings'], parameters=[
@@ -1206,6 +1232,7 @@ class PairingViewSet(RoundAPIMixin, ModelViewSet):
     @extend_schema(summary="Delete all pairings in the round")
     def delete_all(self, request, *args, **kwargs):
         self.get_queryset().delete()
+        self.obj = self.round
         self.log_action(type=ActionLogEntry.ActionType.DRAW_REGENERATE, agent=ActionLogEntry.Agent.API)
         return Response(status=204)  # No content
 
@@ -1331,6 +1358,7 @@ class BallotViewSet(RoundAPIMixin, TournamentPublicAPIMixin, ModelViewSet):
         instance = self.get_object()
         instance.discarded = True
         instance.save()
+        self.obj = instance
         self.log_action(type=ActionLogEntry.ActionType.BALLOT_DISCARD, agent=ActionLogEntry.Agent.API)
         return self.retrieve(request, *args, **kwargs)
 
@@ -1611,6 +1639,7 @@ class PreformedPanelViewSet(RoundAPIMixin, AdministratorAPIMixin, ModelViewSet):
     @extend_schema(summary="Delete all preformed panels from round")
     def delete_all(self, request, *args, **kwargs):
         self.get_queryset().delete()
+        self.obj = self.round
         self.log_action(type=ActionLogEntry.ActionType.PREFORMED_PANELS_DELETE, agent=ActionLogEntry.Agent.API)
         return Response(status=204)  # No content
 
@@ -1623,9 +1652,10 @@ class PreformedPanelViewSet(RoundAPIMixin, AdministratorAPIMixin, ModelViewSet):
                 'bracket_min': bracket_min,
                 'liveness': liveness,
             })
+        self.obj = self.round
         self.log_action(type=self.action_log_type_created, agent=ActionLogEntry.Agent.API)
 
-        return self.get(request, *args, **kwargs)
+        return self.list(request, *args, **kwargs)
 
 
 @extend_schema(tags=['users'])

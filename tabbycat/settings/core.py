@@ -22,9 +22,9 @@ SECRET_KEY = r'#2q43u&tp4((4&m3i8v%w-6z6pp7m(v0-6@w@i!j5n)n15epwc'
 # Version
 # ==============================================================================
 
-TABBYCAT_VERSION = '2.12.0-dev'
-TABBYCAT_CODENAME = 'U'
-READTHEDOCS_VERSION = 'v2.12.0'
+TABBYCAT_VERSION = '2.13.0-dev'
+TABBYCAT_CODENAME = 'V'
+READTHEDOCS_VERSION = 'v2.13.0'
 
 # ==============================================================================
 # Internationalization and Localization
@@ -393,8 +393,9 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Tabbycat API',
+    'REDOC_DIST': 'https://cdn.jsdelivr.net/npm/redoc@2.5.4',
     'DESCRIPTION': 'Parliamentary debate tabulation software',
-    'VERSION': '1.3.0',
+    'VERSION': '1.4.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': r'api/v\d+',
     'CONTACT': {'name': 'Étienne Beaulé', 'email': 'ebeaule@tabbycat-debate.org'},

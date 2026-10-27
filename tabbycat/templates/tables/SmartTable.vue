@@ -8,8 +8,7 @@ import CheckCell from '../tables/CheckCell.vue'
 import AjaxSelectCell from '../tables/AjaxSelectCell.vue'
 import BallotsCell from '../../results/templates/BallotsCell.vue'
 import { useSortableTable } from '../composables/useSortableTable.js'
-
-const FeedbackTrend = defineAsyncComponent(() => import('../graphs/FeedbackTrend.vue'))
+import FeedbackTrend from '../graphs/FeedbackTrend.vue'
 
 const props = defineProps({
   tableHeaders: Array,
@@ -114,9 +113,9 @@ const copyTableData = async () => {
   }
   const content = props.tableContent.map(row =>
     row.reduce((acc, cell, index) => {
-      const value = ['ajax-select-cell', 'check-cell'].includes(cell.component)
+      const value = cell.export ?? (['ajax-select-cell', 'check-cell'].includes(cell.component)
         ? getCellValue(cell)
-        : cell.text
+        : cell.text)
       acc[props.tableHeaders[index].key] = typeof value === 'string'
         ? getPlainText(value)
         : (value ?? '')
