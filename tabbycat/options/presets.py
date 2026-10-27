@@ -169,6 +169,7 @@ class AustralsPreferences(PreferencesPreset):
         "one-up-one-down. Compliant with AIDA rules.")
     show_in_list = True
 
+    # Rules: https://docs.google.com/document/u/0/d/10iUDk9MlmZr7GrZjU7bqsHeB2FUF3JiN8cTeuEvQFDU/mobilebasic#id.sqyw64
     # Scoring
     scoring__score_min                         = Decimal('70') # Technically the speaks
     scoring__score_max                         = Decimal('80') # range is at the adj
@@ -180,10 +181,12 @@ class AustralsPreferences(PreferencesPreset):
     # Draws
     draw_rules__avoid_same_institution         = True
     draw_rules__avoid_team_history             = True
-    draw_rules__draw_odd_bracket               = 'intermediate_bubble_up_down'
+    draw_rules__draw_odd_bracket               = 'intermediate_bubble_up_down' # From Rules 54.6
     draw_rules__draw_side_allocations          = 'balance'
-    draw_rules__draw_pairing_method            = 'slide'
-    draw_rules__draw_avoid_conflicts           = 'one_up_one_down'
+    draw_rules__draw_pairing_method            = 'slide' # From Rules 54.9
+    draw_rules__draw_avoid_conflicts           = 'one_up_one_down' # From Rules 54.10
+    draw_rules__draw_pullup_restriction        = 'least_to_date' # From Rules 54.9.1
+    draw_rules__draw_pullup_percentage         = 25 # From Rules 54.9.1
     # Debate Rules
     debate_rules__teams_in_debate              = 2
     debate_rules__ballots_per_debate_prelim    = 'per-adj'
@@ -376,6 +379,7 @@ class UADCPreferences(AustralsPreferences):
     draw_rules__draw_side_allocations          = 'balance'
     draw_rules__draw_pairing_method            = 'slide'  # From rules 20.9
     draw_rules__draw_avoid_conflicts           = 'one_up_one_down'  # From rules 10.6.4
+    draw_rules__draw_pullup_restriction        = 'least_to_date' # From rules 20.10
     # Debate Rules
     debate_rules__substantive_speakers         = 3
     debate_rules__reply_scores_enabled         = True
