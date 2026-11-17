@@ -123,7 +123,7 @@ const copyTableData = async () => {
       return acc
     }, {}),
   )
-  const csvConfig = mkConfig({ useKeysAsHeaders: true })
+  const csvConfig = mkConfig({ useKeysAsHeaders: true, fieldSeparator: '\t', quoteStrings: false, useBom: false })
   const csvData = generateCsv(csvConfig)(content)
   await navigator.clipboard.writeText(csvData)
 }
