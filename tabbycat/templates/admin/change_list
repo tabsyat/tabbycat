@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+{% load admin_list %}
+{% comment %}
+  Django 6 wraps the paginator in <div class="changelist-footer">, but
+  django-jet-reboot adds its own .changelist-footer around the actions and
+  paginator. The two nested footers confuse Jet's fixed footer, which then
+  covers the last rows of the table. Render the paginator without the wrapper,
+  as in Django 5; the Save button is in admin/pagination.html.
+{% endcomment %}
+{% block pagination %}{% pagination cl %}{% endblock %}
