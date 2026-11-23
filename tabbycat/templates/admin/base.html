@@ -1,0 +1,52 @@
+{% extends "admin/base.html" %}
+{% comment %}
+  Adapts django-jet-reboot 1.3.10's admin/base.html to Django 6. This extends
+  Jet's template (Django skips this file when resolving the same name), so only
+  the blocks below differ from Jet's.
+{% endcomment %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    /* Django 6 renders breadcrumbs as <ol class="breadcrumbs">; Jet only styles
+       div.breadcrumbs and replaces "›" separators, which Django 6 no longer adds. */
+    ol.breadcrumbs {
+      list-style: none;
+      margin: 0;
+      padding: 10px 215px 10px 20px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    ol.breadcrumbs li {
+      display: inline;
+    }
+    ol.breadcrumbs li + li::before {
+      content: "›";
+      margin: 0 8px;
+    }
+
+    /* Django 6 adds headings meant only for screen readers (e.g. "Pagination
+       users"); Jet doesn't define this class, so they would be visible. */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+{% endblock %}
+
+{% comment %}
+  Django 6 moved object-tools (the "Add" button) out of the content block, but
+  Jet nests it inside content, so it was dropped whenever a page overrides
+  content. Rendering it here, after the title, puts it outside content again.
+{% endcomment %}
+{% block content_title %}{{ block.super }}{% block object-tools %}{% endblock %}{% endblock %}
