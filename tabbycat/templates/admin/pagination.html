@@ -1,0 +1,15 @@
+{% load admin_list %}
+{% load i18n %}
+{% comment %}
+  Django 6's pagination.html wraps page links in <ul><li>, but django-jet-reboot
+  only lays out page links that are direct children of .paginator (as in
+  Django 5). Same as Django 6's template, without the list.
+{% endcomment %}
+<nav class="paginator" aria-labelledby="pagination">
+    <h2 id="pagination" class="visually-hidden">{% blocktranslate with name=cl.opts.verbose_name_plural %}Pagination {{ name }}{% endblocktranslate %}</h2>
+    {% if pagination_required %}
+    {% for i in page_range %}{% paginator_number cl i %}{% endfor %}
+    {% endif %}
+{{ cl.result_count }} {% if cl.result_count == 1 %}{{ cl.opts.verbose_name }}{% else %}{{ cl.opts.verbose_name_plural }}{% endif %}
+{% if show_all_url %}<a href="{{ show_all_url }}" class="showall">{% translate 'Show all' %}</a>{% endif %}
+</nav>
