@@ -5,7 +5,6 @@ set -o errexit
 echo "-----> Install dependencies"
 python -m pip install pipenv
 pipenv install --system
-python -m pip install "git+https://github.com/assem-ch/django-jet-reboot.git@c22e2f6"
 
 echo "-----> I'm post-compile hook"
 cd ./tabbycat/
