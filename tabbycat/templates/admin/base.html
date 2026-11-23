@@ -8,6 +8,9 @@
 {% block extrastyle %}
   {{ block.super }}
   <style>
+    /* Django 6 renders breadcrumbs as <ol class="breadcrumbs">, without "›"
+       separators; Jet only styles div.breadcrumbs. Values copied from Jet's
+       default theme so they look the same. */
     ol.breadcrumbs {
       list-style: none;
       margin: 0;
@@ -34,7 +37,7 @@
       color: #639af5;
     }
     ol.breadcrumbs li + li::before {
-
+      /* Jet's icon-arrow-right, as used by its .breadcrumbs-separator */
       font-family: 'jet-icons';
       content: "\e60b";
       color: #c0d4e8;
@@ -44,6 +47,18 @@
       vertical-align: middle;
     }
 
+    /* Django 6 marks the current page as a link with aria-current instead of
+       <span class="this-page">; style it like Jet's current page. */
+    .paginator .pages-wrapper a[aria-current="page"],
+    .paginator .pages-wrapper a[aria-current="page"]:hover,
+    .paginator .pages-wrapper a[aria-current="page"]:focus {
+      background-color: #6f7e95;
+      color: #fff;
+      cursor: default;
+    }
+
+    /* Django 6 adds headings meant only for screen readers (e.g. "Pagination
+       users"); Jet doesn't define this class, so they would be visible. */
     .visually-hidden {
       position: absolute;
       width: 1px;
@@ -60,6 +75,8 @@
 {% block extrahead %}
   {{ block.super }}
   <script>
+    // Jet's layout expects the object tools ("Add" button) inside #content-main,
+    // where Django 5 put them; move them back so they sit next to the toolbar.
     document.addEventListener('DOMContentLoaded', function () {
       var tools = document.querySelector('#content > .object-tools');
       var main = document.getElementById('content-main');
