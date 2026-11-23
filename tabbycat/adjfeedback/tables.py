@@ -32,7 +32,7 @@ class FeedbackTableBuilder(TabbycatTableBuilder):
     def add_tester_checkbox(self, adjudicators):
         tester_header = {
             'key': 'tester',
-            'icon': 'check-circle',
+            'icon': 'circle-check-big',
             'tooltip': _("Whether the adj tests other adjs (click to mark). "
                          "Adjudication core members are always testers"),
         }
@@ -125,7 +125,7 @@ class FeedbackTableBuilder(TabbycatTableBuilder):
     def add_score_variance_columns(self, adjudicators):
         diff_header = {
             'key': 'score-variance',
-            'icon': 'bar-chart-2',
+            'icon': 'chart-no-axes-column',
             'tooltip': _("The standard deviation of this adjudicator's current scores; with larger numbers meaning less consistent feedback scores."),
         }
         diff_data = [{
@@ -137,10 +137,12 @@ class FeedbackTableBuilder(TabbycatTableBuilder):
         self.add_column(diff_header, diff_data)
 
     def add_feedback_graphs(self, adjudicators):
-        nprelims = self.tournament.prelim_rounds().count()
+        rounds = list(self.tournament.prelim_rounds().order_by('seq').values_list('seq', 'abbreviation'))
+        nprelims = len(rounds)
         feedback_head = {
             'key': 'feedback',
             'title': _('Feedback Per Round'),
+            'csvRounds': rounds,
             'tooltip': _("Hover over the data points to show the average score received in that round"),
         }
         feedback_graph_data = [{

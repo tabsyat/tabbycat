@@ -2,20 +2,23 @@ import json
 from unittest.mock import AsyncMock, patch
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import connection
 from django.test import Client
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from rest_framework.response import Response
 from rest_framework.test import APITestCase
 
 from actionlog.models import ActionLogEntry
 from adjallocation.models import PreformedPanel
 from availability.models import RoundAvailability
-from checkins.models import Event
-from participants.models import Speaker, Team
+from checkins.models import Event, PersonIdentifier
+from participants.models import Adjudicator, Speaker, Team
 from results.models import BallotSubmission, SpeakerScore
-from tournaments.models import Round
+from tournaments.models import Round, Tournament
 from utils.tests import CompletedTournamentTestMixin, V1_ROOT_URL
+from venues.models import Venue
 
 
 class RootTests(APITestCase):
@@ -68,6 +71,34 @@ class TournamentViewsetTests(CompletedTournamentTestMixin, APITestCase):
         response = self.client.get(self.reverse_url('api-tournament-detail'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["id"], self.tournament.id)
+
+    def test_tournament_writes_require_staff(self):
+        list_url = reverse('api-tournament-list')
+        detail_url = self.reverse_url('api-tournament-detail')
+        write_actions = (
+            (self.client.post, list_url, 'create'),
+            (self.client.post, detail_url, 'update'),
+            (self.client.patch, detail_url, 'partial_update'),
+            (self.client.delete, detail_url, 'destroy'),
+        )
+        user_model = get_user_model()
+        for user, expected_status in ((None, 401), (user_model(), 403), (user_model(is_staff=True), 204)):
+            self.client.force_authenticate(user=user)
+            for request, url, action in write_actions:
+                with self.subTest(action=action, expected_status=expected_status):
+                    with patch(f'api.views.TournamentViewSet.{action}', return_value=Response(status=204)):
+                        self.assertEqual(request(url).status_code, expected_status)
+
+
+class GlobalInstitutionViewsetTests(APITestCase):
+
+    def test_list_global_institutions_requires_staff(self):
+        url = reverse('api-global-institution-list')
+        user_model = get_user_model()
+        for user, expected_status in ((None, 401), (user_model(), 403), (user_model(is_staff=True), 200)):
+            with self.subTest(expected_status=expected_status):
+                self.client.force_authenticate(user=user)
+                self.assertEqual(self.client.get(url).status_code, expected_status)
 
 
 class ParticipantNameValidationTests(CompletedTournamentTestMixin, APITestCase):
@@ -327,6 +358,46 @@ class SpeakerCategoryViewsetTests(CompletedTournamentTestMixin, APITestCase):
         self.assertEqual(len(response.data), 2)
 
 
+class StandingsRoundTests(CompletedTournamentTestMixin, APITestCase):
+
+    view_names = ('api-substantive-speaker-standings', 'api-reply-speaker-standings', 'api-team-standings')
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username="admin", password="admin")
+
+    def test_requires_explicit_round_when_no_prelims_completed(self):
+        self.tournament.round_set.filter(stage=Round.Stage.PRELIMINARY).update(completed=False)
+
+        for view_name in self.view_names:
+            with self.subTest(view=view_name):
+                response = self.client.get(self.reverse_url(view_name))
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.data, {'round': 'No completed preliminary rounds. Specify a round explicitly.'})
+
+    def test_explicit_round_can_be_incomplete(self):
+        self.tournament.round_set.update(completed=False)
+
+        for view_name in self.view_names:
+            with self.subTest(view=view_name):
+                response = self.client.get(self.reverse_url(view_name), {'round': 2})
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.data)
+
+    def test_defaults_to_last_completed_preliminary_round(self):
+        last_completed = self.tournament.round_set.filter(stage=Round.Stage.PRELIMINARY, completed=True).order_by('seq').last()
+
+        for view_name in self.view_names:
+            with self.subTest(view=view_name):
+                url = self.reverse_url(view_name)
+                response = self.client.get(url)
+                explicit_response = self.client.get(url, {'round': last_completed.seq})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(explicit_response.status_code, 200)
+                self.assertTrue(response.data)
+                self.assertEqual(response.data, explicit_response.data)
+
+
 class SpeakerRoundStandingsViewsetTests(CompletedTournamentTestMixin, APITestCase):
 
     def setUp(self):
@@ -497,8 +568,42 @@ class BallotViewSetTests(CompletedTournamentTestMixin, APITestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_access_with_private_url(self):
+        self.tournament.preferences['data_entry__participant_ballots'] = 'private-urls'
         response = self.client.get(reverse('api-ballot-list', kwargs={'tournament_slug': self.tournament.slug, 'round_seq': 1, 'debate_pk': 12}), headers={"Authorization": "Key urlkey"})
         self.assertEqual(response.status_code, 200)
+
+    def test_read_ballots_requires_explicit_release_or_private_url_access(self):
+        url = self.reverse_url('api-ballot-list', round_seq=1, debate_pk=12)
+        headers = {"Authorization": "Key urlkey"}
+        self.tournament.preferences['data_entry__participant_ballots'] = 'off'
+        self.tournament.preferences['tab_release__private_ballots_released'] = False
+        self.tournament.preferences['tab_release__ballots_released'] = False
+        self.tournament.preferences['tab_release__all_results_released'] = False
+        self.assertEqual(self.client.get(url, headers=headers).status_code, 403)
+
+        self.tournament.preferences['tab_release__private_ballots_released'] = True
+        self.assertEqual(self.client.get(url).status_code, 401)
+        self.assertEqual(self.client.get(url, headers=headers).status_code, 200)
+
+        self.tournament.preferences['tab_release__ballots_released'] = True
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+
+class ParticipantCheckinTests(CompletedTournamentTestMixin, APITestCase):
+
+    def test_participant_self_checkin_requires_enabled_private_key(self):
+        adjudicator = Adjudicator.objects.create(tournament=self.tournament, name='Check-in adjudicator', url_key='checkin-test-key')
+        PersonIdentifier.objects.create(person=adjudicator)
+        url = self.reverse_url('api-adjudicator-checkin', pk=adjudicator.pk)
+        headers = {"Authorization": f"Key {adjudicator.url_key}"}
+
+        self.tournament.preferences['data_entry__public_checkins_submit'] = False
+        self.assertEqual(self.client.get(url, headers=headers).status_code, 403)
+
+        self.tournament.preferences['data_entry__public_checkins_submit'] = True
+        self.assertEqual(self.client.get(url).status_code, 401)
+        self.assertEqual(self.client.get(url, headers=headers).status_code, 200)
+        self.assertEqual(self.client.post(url, headers=headers).status_code, 403)
 
 
 class RoundActionTests(CompletedTournamentTestMixin, APITestCase):
@@ -599,3 +704,82 @@ class AvailabilitiesViewSetTests(CompletedTournamentTestMixin, APITestCase):
             {int(url.rsplit('/', 1)[-1]) for url in availabilities},
             {self.objects['teams'].pk, self.objects['venues'].pk},
         )
+
+    def test_marking_available_participants_is_idempotent(self):
+        params = {param: 'true' for param in self.objects}
+        expected = self.get_availabilities(params)
+        url = self.reverse_url('api-availability-list') + '?' + '&'.join('%s=true' % param for param in params)
+
+        for _ in range(2):
+            response = self.client.put(url, expected)
+
+            self.assertEqual(response.status_code, 200)
+            self.assertCountEqual(response.data, expected)
+            self.assertEqual(RoundAvailability.objects.filter(round=self.round).count(), len(expected))
+
+    def test_marking_available_ignores_duplicates_and_adds_new_participants(self):
+        params = {param: 'true' for param in self.objects}
+        existing = self.get_availabilities(params)
+        new_urls = []
+        for obj in self.objects.values():
+            participant = getattr(self.tournament, obj._meta.model_name + '_set').exclude(pk=obj.pk).first()
+            self.assertIsNotNone(participant)
+            new_urls.append('http://testserver' + reverse('api-%s-detail' % obj._meta.model_name, kwargs={
+                'tournament_slug': self.tournament.slug, 'pk': participant.pk,
+            }))
+        url = self.reverse_url('api-availability-list') + '?' + '&'.join('%s=true' % param for param in params)
+
+        response = self.client.put(url, existing + new_urls * 2)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertCountEqual(response.data, existing + new_urls)
+        self.assertEqual(RoundAvailability.objects.filter(round=self.round).count(), len(existing) + len(new_urls))
+
+    def test_write_methods_accept_items_from_tournament(self):
+        for method in ('put', 'patch', 'post'):
+            for obj in self.objects.values():
+                with self.subTest(method=method, model=type(obj).__name__):
+                    availability = obj.round_availabilities.filter(round=self.round)
+                    availability.delete()
+                    if method != 'put':
+                        RoundAvailability.objects.create(round=self.round, content_object=obj)
+                    url = reverse('api-%s-detail' % obj._meta.model_name, kwargs={
+                        'tournament_slug': self.tournament.slug, 'pk': obj.pk,
+                    })
+
+                    response = getattr(self.client, method)(
+                        self.reverse_url('api-availability-list'), [url], format='json')
+
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(availability.exists(), method == 'put')
+
+    def test_write_methods_reject_items_from_other_tournament(self):
+        other_tournament = Tournament.objects.create(slug='other')
+        other_objects = [
+            Adjudicator.objects.create(tournament=other_tournament, name='Other adjudicator'),
+            Team.objects.create(tournament=other_tournament, reference='Other team'),
+            Venue.objects.create(tournament=other_tournament, name='Other room', priority=0),
+        ]
+        for method in ('put', 'patch', 'post'):
+            for obj in other_objects:
+                for slug in (other_tournament.slug, self.tournament.slug):
+                    with self.subTest(method=method, model=type(obj).__name__, slug=slug):
+                        local_obj = self.objects['teams']
+                        if method == 'put':
+                            local_obj.round_availabilities.filter(round=self.round).delete()
+                        elif not local_obj.round_availabilities.filter(round=self.round).exists():
+                            RoundAvailability.objects.create(round=self.round, content_object=local_obj)
+                        local_url = reverse('api-team-detail', kwargs={
+                            'tournament_slug': self.tournament.slug, 'pk': local_obj.pk,
+                        })
+                        foreign_url = reverse('api-%s-detail' % obj._meta.model_name, kwargs={
+                            'tournament_slug': slug, 'pk': obj.pk,
+                        })
+                        before = set(RoundAvailability.objects.values_list('pk', flat=True))
+
+                        response = getattr(self.client, method)(
+                            self.reverse_url('api-availability-list'),
+                            [local_url, foreign_url], format='json')
+
+                        self.assertEqual(response.status_code, 400)
+                        self.assertEqual(set(RoundAvailability.objects.values_list('pk', flat=True)), before)

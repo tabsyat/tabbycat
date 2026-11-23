@@ -18,7 +18,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 from rest_framework.fields import DateTimeField
 from rest_framework.generics import CreateAPIView, GenericAPIView, get_object_or_404, ListAPIView, RetrieveUpdateAPIView
 from rest_framework.mixins import ListModelMixin
-from rest_framework.permissions import BasePermission, IsAdminUser
+from rest_framework.permissions import AllowAny, BasePermission, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
@@ -50,7 +50,7 @@ from venues.models import Venue, VenueCategory
 from . import serializers
 from .fields import ParticipantAvailabilityForeignKeyField
 from .mixins import AdministratorAPIMixin, APILogActionMixin, PublicAPIMixin, RoundAPIMixin, TournamentAPIMixin, TournamentPublicAPIMixin
-from .permissions import PerTournamentPermissionRequired, PublicPreferencePermission, URLKeyAuthentication
+from .permissions import IsAdminOrReadOnly, PerTournamentPermissionRequired, PublicPreferencePermission, URLKeyAuthentication
 from .query_serializers import (
     AdjudicatorParamsSerializer, AvailabilitiesParamsSerializer, BallotParamsSerializer, FeedbackParamsSerializer, FeedbackQuestionParamsSerializer,
     InstitutionParamsSerializer, SpeakerRoundStandingsRoundsParamsSerializer, SpeakerStandingsParamsSerializer, StandingsParamsSerializer,
@@ -71,7 +71,8 @@ id_parameter = OpenApiParameter('id', description="The object's primary key", ty
 
 
 @extend_schema(tags=['root'], summary="API root")
-class APIRootView(PublicAPIMixin, GenericAPIView):
+class APIRootView(GenericAPIView):
+    permission_classes = [AllowAny]
     name = "API Root"
     serializer_class = serializers.RootSerializer
 
@@ -88,7 +89,8 @@ class APIRootView(PublicAPIMixin, GenericAPIView):
 
 
 @extend_schema(tags=['root'], summary="API v1 root")
-class APIV1RootView(PublicAPIMixin, GenericAPIView):
+class APIV1RootView(GenericAPIView):
+    permission_classes = [AllowAny]
     name = "API Version 1 Root"
     serializer_class = serializers.V1RootSerializer
     lookup_field = 'slug'
@@ -117,7 +119,8 @@ class APIV1RootView(PublicAPIMixin, GenericAPIView):
     partial_update=extend_schema(summary="Patch tournament", parameters=[tournament_parameter]),
     destroy=extend_schema(summary="Delete tournament", parameters=[tournament_parameter]),
 )
-class TournamentViewSet(PublicAPIMixin, APILogActionMixin, ModelViewSet):
+class TournamentViewSet(APILogActionMixin, ModelViewSet):
+    permission_classes = [IsAdminOrReadOnly]
     # Don't use TournamentAPIMixin here, it's not filtering objects by tournament.
     queryset = Tournament.objects.all().prefetch_related(
         'breakcategory_set',
@@ -498,15 +501,11 @@ class AdjudicatorViewSet(TournamentAPIMixin, TournamentPublicAPIMixin, ModelView
     partial_update=extend_schema(summary="Patch institution", parameters=[id_parameter]),
     destroy=extend_schema(summary="Delete institution", parameters=[id_parameter]),
 )
-class GlobalInstitutionViewSet(AdministratorAPIMixin, ModelViewSet):
+class GlobalInstitutionViewSet(ModelViewSet):
+    permission_classes = [IsAdminUser]
     serializer_class = serializers.InstitutionSerializer
     action_log_type_created = ActionLogEntry.ActionType.INSTITUTION_CREATE
     action_log_type_updated = ActionLogEntry.ActionType.INSTITUTION_EDIT
-
-    list_permission = Permission.VIEW_INSTITUTIONS
-    create_permission = Permission.ADD_INSTITUTIONS
-    update_permission = Permission.ADD_INSTITUTIONS
-    destroy_permission = Permission.ADD_INSTITUTIONS
 
     def get_queryset(self):
         params = InstitutionParamsSerializer(data=self.request.query_params)
@@ -738,7 +737,11 @@ class BaseCheckinsView(AdministratorAPIMixin, TournamentAPIMixin, APIView):
 class PersonCheckinMixin:
     class CustomPermission(BasePermission):
         def has_permission(self, request, view):
-            return (view.tournament.pref('public_checkins_submit') == 'private-urls' and view.participant_requester) or request.method != 'POST'
+            return (
+                request.method != 'POST' and
+                view.participant_requester is not None and
+                view.tournament.pref('public_checkins_submit')
+            )
 
     authentication_classes = [TokenAuthentication, SessionAuthentication, URLKeyAuthentication]
     permission_classes = [PerTournamentPermissionRequired | CustomPermission]
@@ -868,7 +871,10 @@ class BaseStandingsView(TournamentAPIMixin, TournamentPublicAPIMixin, GenericAPI
     def get_max_round(self):
         if self.params.get('round'):
             return self.params.get('round')
-        return Round.objects.filter(tournament=self.tournament, stage=Round.Stage.PRELIMINARY, completed=True).order_by('seq').last()
+        round = Round.objects.filter(tournament=self.tournament, stage=Round.Stage.PRELIMINARY, completed=True).order_by('seq').last()
+        if round is None:
+            raise ValidationError({'round': 'No completed preliminary rounds. Specify a round explicitly.'})
+        return round
 
     @property
     def generator_kwargs(self):
@@ -877,7 +883,7 @@ class BaseStandingsView(TournamentAPIMixin, TournamentPublicAPIMixin, GenericAPI
     @extend_schema(tags=['standings'], parameters=[
         tournament_parameter,
         OpenApiParameter('category', description='Only include participants in a category (ID)', required=False, type=int),
-        OpenApiParameter('round', description='Sequence of last round to take into account', required=False, type=int),
+        OpenApiParameter('round', description='Sequence of last round to take into account. Defaults to the last completed preliminary round; required if none exist.', required=False, type=int),
     ])
     def get(self, request, **kwargs):
         """Get current standings"""
@@ -1280,7 +1286,7 @@ class BallotViewSet(RoundAPIMixin, TournamentPublicAPIMixin, ModelViewSet):
                 (view.action in ['list', 'retrieve', 'create'] and view.tournament.pref('participant_ballots') == 'private-urls' and view.participant_requester) or
                 (view.action == 'create' and view.tournament.pref('participant_ballots') == 'public') or
                 (view.action in ['list', 'retrieve'] and (
-                    view.tournament.pref('private_ballots_released') or
+                    (view.tournament.pref('private_ballots_released') and view.participant_requester is not None) or
                     view.tournament.pref('ballots_released') or
                     (view.tournament.pref('all_results_released') and view.tournament.pref('speaker_tab_released'))))
             )
@@ -1528,7 +1534,7 @@ class AvailabilitiesViewSet(RoundAPIMixin, AdministratorAPIMixin, APIView):
 
     def get_field(self):
         field = ParticipantAvailabilityForeignKeyField(many=True, view_name='api-availability-list')  # Dummy view name
-        field.root._context = {'request': self.request}
+        field.root._context = {'request': self.request, 'tournament': self.tournament}
         return field
 
     def get_filters(self):
@@ -1572,13 +1578,15 @@ class AvailabilitiesViewSet(RoundAPIMixin, AdministratorAPIMixin, APIView):
 
         return self.get(request, *args, **kwargs)
 
-    @extend_schema(summary="Mark objects as available")
+    @extend_schema(summary="Mark objects as available", description="Objects already marked as available are ignored.")
     def put(self, request, *args, **kwargs):
         objs = sorted(self.get_field().to_internal_value(request.data), key=lambda o: type(o).__name__)
         for model, participants in groupby(objs, key=type):
             contenttype = ContentType.objects.get_for_model(model)
             RoundAvailability.objects.bulk_create(
-                [RoundAvailability(content_type=contenttype, round=self.round, object_id=p.id) for p in participants])
+                [RoundAvailability(content_type=contenttype, round=self.round, object_id=p.id) for p in participants],
+                ignore_conflicts=True,
+            )
         self.log_action(type=self.action_log_type_updated, agent=ActionLogEntry.Agent.API)
         return self.get(request, *args, **kwargs)
 
@@ -1667,7 +1675,7 @@ class PreformedPanelViewSet(RoundAPIMixin, AdministratorAPIMixin, ModelViewSet):
     partial_update=extend_schema(summary="Patch user", parameters=[id_parameter]),
     destroy=extend_schema(summary="Deactivate user", parameters=[id_parameter]),
 )
-class UserViewSet(AdministratorAPIMixin, ModelViewSet):
+class UserViewSet(ModelViewSet):
     serializer_class = serializers.UserSerializer
     permission_classes = [IsAdminUser]
 
@@ -1693,7 +1701,6 @@ class UserViewSet(AdministratorAPIMixin, ModelViewSet):
 )
 class OwnUserViewSet(UserViewSet):
     serializer_class = serializers.UserSerializer
-    list_permission = True
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
