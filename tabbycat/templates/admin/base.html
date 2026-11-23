@@ -8,8 +8,6 @@
 {% block extrastyle %}
   {{ block.super }}
   <style>
-    /* Django 6 renders breadcrumbs as <ol class="breadcrumbs">; Jet only styles
-       div.breadcrumbs and replaces "›" separators, which Django 6 no longer adds. */
     ol.breadcrumbs {
       list-style: none;
       margin: 0;
@@ -17,20 +15,35 @@
       font-size: 12px;
       font-weight: bold;
       text-transform: uppercase;
+      line-height: 32px;
+      color: #6f7e95;
       white-space: nowrap;
-      overflow: hidden;
       text-overflow: ellipsis;
+      overflow: hidden;
+      min-height: 32px;
     }
     ol.breadcrumbs li {
       display: inline;
     }
+    ol.breadcrumbs a,
+    ol.breadcrumbs a:visited {
+      color: #c0d4e8;
+    }
+    ol.breadcrumbs a:focus,
+    ol.breadcrumbs a:hover {
+      color: #639af5;
+    }
     ol.breadcrumbs li + li::before {
-      content: "›";
-      margin: 0 8px;
+
+      font-family: 'jet-icons';
+      content: "\e60b";
+      color: #c0d4e8;
+      margin: 0 6px;
+      font-weight: bold;
+      font-size: 15px;
+      vertical-align: middle;
     }
 
-    /* Django 6 adds headings meant only for screen readers (e.g. "Pagination
-       users"); Jet doesn't define this class, so they would be visible. */
     .visually-hidden {
       position: absolute;
       width: 1px;
@@ -42,6 +55,19 @@
       border: 0;
     }
   </style>
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var tools = document.querySelector('#content > .object-tools');
+      var main = document.getElementById('content-main');
+      if (tools && main) {
+        main.insertBefore(tools, main.firstChild);
+      }
+    });
+  </script>
 {% endblock %}
 
 {% comment %}
