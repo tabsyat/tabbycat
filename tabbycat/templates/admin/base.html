@@ -1,16 +1,9 @@
 {% extends "admin/base.html" %}
-{% comment %}
-  Adapts django-jet-reboot 1.3.10's admin/base.html to Django 6. This extends
-  Jet's template (Django skips this file when resolving the same name), so only
-  the blocks below differ from Jet's.
-{% endcomment %}
+{# Fixes for django-jet-reboot 1.3.10 on Django 6 #}
 
 {% block extrastyle %}
   {{ block.super }}
   <style>
-    /* Django 6 renders breadcrumbs as <ol class="breadcrumbs">, without "›"
-       separators; Jet only styles div.breadcrumbs. Values copied from Jet's
-       default theme so they look the same. */
     ol.breadcrumbs {
       list-style: none;
       margin: 0;
@@ -37,7 +30,6 @@
       color: #639af5;
     }
     ol.breadcrumbs li + li::before {
-      /* Jet's icon-arrow-right, as used by its .breadcrumbs-separator */
       font-family: 'jet-icons';
       content: "\e60b";
       color: #c0d4e8;
@@ -47,8 +39,6 @@
       vertical-align: middle;
     }
 
-    /* Django 6 marks the current page as a link with aria-current instead of
-       <span class="this-page">; style it like Jet's current page. */
     .paginator .pages-wrapper a[aria-current="page"],
     .paginator .pages-wrapper a[aria-current="page"]:hover,
     .paginator .pages-wrapper a[aria-current="page"]:focus {
@@ -57,9 +47,8 @@
       cursor: default;
     }
 
-    /* Django 6 adds headings meant only for screen readers (e.g. "Pagination
-       users"); Jet doesn't define this class, so they would be visible. */
-    .visually-hidden {
+    .visually-hidden,
+    .form-row p.datetime > label {
       position: absolute;
       width: 1px;
       height: 1px;
@@ -75,8 +64,7 @@
 {% block extrahead %}
   {{ block.super }}
   <script>
-    // Jet's layout expects the object tools ("Add" button) inside #content-main,
-    // where Django 5 put them; move them back so they sit next to the toolbar.
+    // Move the "Add" button back inside #content-main, where Jet expects it
     document.addEventListener('DOMContentLoaded', function () {
       var tools = document.querySelector('#content > .object-tools');
       var main = document.getElementById('content-main');
@@ -87,9 +75,5 @@
   </script>
 {% endblock %}
 
-{% comment %}
-  Django 6 moved object-tools (the "Add" button) out of the content block, but
-  Jet nests it inside content, so it was dropped whenever a page overrides
-  content. Rendering it here, after the title, puts it outside content again.
-{% endcomment %}
+{# Django 6 moved object-tools out of the content block #}
 {% block content_title %}{{ block.super }}{% block object-tools %}{% endblock %}{% endblock %}
