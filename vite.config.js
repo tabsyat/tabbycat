@@ -43,7 +43,10 @@ module.exports = defineConfig(({ command }) => {
         output: {
           entryFileNames: 'js/[name].js',
           chunkFileNames: '[name].js',
-          assetFileNames: 'assets/[name][extname]',
+          // The shared CSS is built from app-main.js but base.html loads it as app.css
+          assetFileNames: (asset) => asset.name === 'app-main.css'
+            ? 'assets/app.css'
+            : 'assets/[name][extname]',
         },
       },
     },
