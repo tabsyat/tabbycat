@@ -47,6 +47,35 @@
       cursor: default;
     }
 
+    /* Django 6 labels multi-input fields (e.g. date and time) with <legend> */
+    .aligned legend {
+      display: block;
+      float: left;
+      width: 160px;
+      padding: 8px 10px 0 0;
+      margin: 0;
+      line-height: 1;
+      word-wrap: break-word;
+    }
+    .aligned legend.required:after {
+      content: "*";
+    }
+    .aligned legend + p {
+      padding: 6px 0;
+      margin: 0 0 0 170px;
+    }
+    @media only screen and (max-width: 960px) {
+      .aligned legend {
+        float: none;
+        width: auto;
+        padding: 0 0 0 2px;
+        margin-bottom: 8px;
+      }
+      .aligned legend + p {
+        margin-left: 0;
+      }
+    }
+
     .visually-hidden,
     .form-row p.datetime > label {
       position: absolute;
